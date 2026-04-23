@@ -11,7 +11,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
+'''
 #Content Security Policy
 CSP_FRAME_ANCESTORS = ("'self'",)
 CSP_REPORT_ONLY = True
@@ -25,7 +25,7 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
+'''
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'apps.courses.apps.CoursesConfig',
     'apps.challenges.apps.ChallengesConfig',
     'apps.glossary.apps.GlossaryConfig',
+    'apps.lab.apps.LabConfig',
 ]
 
 MIDDLEWARE = [

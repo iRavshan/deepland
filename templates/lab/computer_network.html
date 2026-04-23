@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetForge — Network Topology Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b12;
+    --panel: #0d1420;
+    --panel2: #111926;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #00ff88;
+    --accent3: #ff6b35;
+    --warn: #ffcc00;
+    --text: #c8ddf0;
+    --text-dim: #4a6a8a;
+    --text-bright: #e8f4ff;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+    --glow2: 0 0 20px rgba(0,255,136,0.3);
+    --grid-color: rgba(30,45,69,0.5);
+  }
+  
+  :root.day-mode {
+    --bg: #f0f4f8;
+    --panel: #ffffff;
+    --panel2: #f8fafc;
+    --border: #cbd5e1;
+    --accent: #0284c7;
+    --accent2: #16a34a;
+    --accent3: #ea580c;
+    --warn: #d97706;
+    --text: #334155;
+    --text-dim: #64748b;
+    --text-bright: #0f172a;
+    --glow: 0 0 15px rgba(2,132,199,0.3);
+    --glow2: 0 0 15px rgba(22,163,74,0.3);
+    --grid-color: rgba(203,213,225,0.8);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon { font-size: 22px; }
+
+  .header-divider { width: 1px; height: 28px; background: var(--border); }
+
+  .header-actions { display: flex; gap: 8px; margin-left: auto; }
+
+  .btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.05); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+  .btn.primary:hover { background: rgba(0,212,255,0.18); box-shadow: var(--glow); }
+  .btn.success { border-color: var(--accent2); color: var(--accent2); }
+  .btn.success:hover { background: rgba(0,255,136,0.08); box-shadow: var(--glow2); }
+  .btn.danger { border-color: #ff4444; color: #ff4444; }
+  .btn.danger:hover { background: rgba(255,68,68,0.08); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT SIDEBAR */
+  .sidebar-left {
+    width: 200px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+    transition: width 0.25s ease, opacity 0.2s ease;
+  }
+  .sidebar-left.collapsed {
+    width: 0;
+    border-right: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ACCORDION */
+  .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 10px;
+    transition: color 0.15s;
+  }
+  .accordion-header:hover .sidebar-title,
+  .accordion-header:hover .info-title {
+    color: var(--text-bright);
+  }
+  .accordion-header .sidebar-title,
+  .accordion-header .info-title {
+    margin-bottom: 0;
+  }
+  .accordion-icon {
+    width: 14px;
+    height: 14px;
+    stroke: var(--text-dim);
+    transition: transform 0.2s ease;
+  }
+  .accordion-header:hover .accordion-icon {
+    stroke: var(--text-bright);
+  }
+  .collapsed > .accordion-header .accordion-icon {
+    transform: rotate(-90deg);
+  }
+  .accordion-content {
+    display: block;
+    overflow: hidden;
+  }
+  .collapsed > .accordion-content {
+    display: none;
+  }
+
+  .component-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .component-item {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 6px;
+    cursor: grab;
+    text-align: center;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .component-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .component-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .component-item:hover::before { opacity: 1; }
+  .component-item:active { cursor: grabbing; transform: scale(0.96); }
+
+  .component-item .ci-icon { font-size: 22px; margin-bottom: 4px; }
+  .component-item .ci-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .component-item:hover .ci-label { color: var(--accent); }
+
+  /* device type colors */
+  .ci-router:hover { border-color: var(--accent); }
+  .ci-switch:hover { border-color: var(--accent2); }
+  .ci-hub:hover { border-color: var(--warn); }
+  .ci-firewall:hover { border-color: var(--accent3); }
+  .ci-server:hover { border-color: #aa88ff; }
+  .ci-pc:hover { border-color: #88ccff; }
+  .ci-ap:hover { border-color: #ff88aa; }
+  .ci-cloud:hover { border-color: #88ddff; }
+
+  /* Templates */
+  .template-list { display: flex; flex-direction: column; gap: 5px; }
+  .template-btn {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.15s;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-align: left;
+    width: 100%;
+  }
+  .template-btn:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(0,255,136,0.04); }
+  .template-btn span { font-size: 16px; }
+
+  /* Technologies */
+  .tech-options { display: flex; flex-direction: column; gap: 4px; }
+  .tech-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    font-size: 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 500;
+  }
+  .tech-option:hover { border-color: var(--border); background: var(--panel2); }
+  .tech-option.active { border-color: var(--accent); background: rgba(0,212,255,0.06); color: var(--accent); }
+  .tech-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* CANVAS AREA */
+  .canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    background-image: radial-gradient(circle, rgba(30,45,69,0.6) 1px, transparent 1px);
+    background-size: 24px 24px;
+    cursor: grab;
+  }
+  .canvas-area.panning { cursor: grabbing; }
+  .canvas-area.tool-connect-cursor { cursor: crosshair; }
+  .canvas-area.tool-delete-cursor { cursor: not-allowed; }
+
+  .rubber-band {
+    position: absolute;
+    border: 1px solid var(--accent);
+    background: rgba(0,212,255,0.06);
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  .zoom-indicator {
+    position: absolute;
+    bottom: 70px;
+    right: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: rgba(13,20,32,0.85);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .canvas-inner {
+    position: absolute;
+    inset: 0;
+    transform-origin: 0 0;
+  }
+
+  #svg-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .canvas-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .canvas-hint .hint-icon { font-size: 56px; opacity: 0.08; margin-bottom: 12px; }
+  .canvas-hint p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    opacity: 0.4;
+    line-height: 1.8;
+  }
+
+  /* NODES */
+  .network-node {
+    position: absolute;
+    z-index: 10;
+    cursor: move;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    transition: filter 0.15s;
+  }
+  .network-node:hover { filter: brightness(1.2); }
+  .network-node.selected .node-body { box-shadow: 0 0 0 2px var(--accent), 0 0 20px rgba(0,212,255,0.4); }
+  .network-node.connecting-source .node-body { box-shadow: 0 0 0 2px var(--accent2), 0 0 20px rgba(0,255,136,0.5); }
+
+  .node-body {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    position: relative;
+    background: var(--bg);
+    transition: box-shadow 0.15s;
+  }
+  .node-body svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .node-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+  .network-node.selected .node-label { color: var(--accent); }
+
+  .node-delete {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+    background: #ff4444;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    z-index: 20;
+    border: none;
+    color: white;
+    line-height: 1;
+  }
+  .network-node.selected .node-delete { display: flex; }
+
+  /* Node type styles */
+  .nt-router .node-body { background: rgba(0,100,150,0.2); border-color: var(--accent); color: var(--accent); }
+  .nt-switch .node-body { background: rgba(0,100,60,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .nt-hub .node-body { background: rgba(100,80,0,0.2); border-color: var(--warn); color: var(--warn); }
+  .nt-firewall .node-body { background: rgba(100,50,20,0.2); border-color: var(--accent3); color: var(--accent3); }
+  .nt-server .node-body { background: rgba(80,40,120,0.2); border-color: #aa88ff; color: #aa88ff; }
+  .nt-pc .node-body { background: rgba(30,80,120,0.2); border-color: #88ccff; color: #88ccff; }
+  .nt-ap .node-body { background: rgba(120,30,70,0.2); border-color: #ff88aa; color: #ff88aa; }
+  .nt-cloud .node-body { background: rgba(20,80,120,0.2); border-color: #88ddff; color: #88ddff; }
+
+  /* Packet animation */
+  .packet {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+  }
+
+  /* RIGHT SIDEBAR */
+  .sidebar-right {
+    width: 220px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+    transition: width 0.25s ease, opacity 0.2s ease;
+  }
+  .sidebar-right.collapsed {
+    width: 0;
+    border-left: none;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .panel-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .panel-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.06);
+  }
+  .panel-toggle.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.1);
+  }
+  .panel-toggle svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .info-panel {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .prop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 12px;
+  }
+  .prop-label { color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-weight: 500; }
+  .prop-value { color: var(--text-bright); font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+  .prop-value.online { color: var(--accent2); }
+  .prop-value.warning { color: var(--warn); }
+
+  .prop-input {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 2px;
+    width: 100px;
+    outline: none;
+  }
+  .prop-input:focus { border-color: var(--accent); }
+
+  .log-area {
+    padding: 10px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .log-area .accordion-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 120px;
+  }
+
+  .log-entry {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(30,45,69,0.3);
+    line-height: 1.4;
+    animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .log-entry .log-time { color: var(--text-dim); }
+  .log-entry .log-msg { color: var(--text); }
+  .log-entry.log-ok .log-msg { color: var(--accent2); }
+  .log-entry.log-warn .log-msg { color: var(--warn); }
+  .log-entry.log-err .log-msg { color: #ff6666; }
+  .log-entry.log-info .log-msg { color: var(--accent); }
+
+  /* Topology badge */
+  .topo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+
+  /* TOOLBAR (bottom of canvas) */
+  .canvas-toolbar {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: rgba(13,20,32,0.92);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .tool-btn {
+    width: 36px;
+    height: 36px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .tool-btn:hover { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
+  .tool-btn.active { border-color: var(--accent2); background: rgba(0,255,136,0.1); }
+  .tool-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%; transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .tool-btn:hover::after { opacity: 1; }
+
+  /* SVG link styles */
+  .link-line { stroke-width: 2; fill: none; transition: stroke 0.3s; }
+  .link-line.lt-ethernet { stroke: #2a6090; }
+  .link-line.lt-fiber { stroke: #00d4ff; stroke-width: 2.5; }
+  .link-line.lt-wifi { stroke: #ff88aa; stroke-dasharray: 8,4; }
+  .link-line.lt-wan { stroke: #ff6b35; stroke-dasharray: 6,3; }
+  .link-line.lt-vpn { stroke: #aa88ff; stroke-dasharray: 4,2; }
+
+  /* Connecting mode overlay */
+  .connect-line {
+    stroke: var(--accent2);
+    stroke-width: 2;
+    stroke-dasharray: 6,4;
+    fill: none;
+    pointer-events: none;
+    animation: dash 0.5s linear infinite;
+  }
+  @keyframes dash { to { stroke-dashoffset: -10; } }
+
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .modal p { font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex; gap: 16px;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .stat-item { display: flex; gap: 5px; align-items: center; }
+  .stat-val { color: var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--panel); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  select.prop-input {
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="panel-toggle active" id="toggle-left" title="Toggle Components Panel">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="1"/><line x1="14" y1="6" x2="21" y2="6"/><line x1="14" y1="12" x2="21" y2="12"/><line x1="14" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-divider"></div>
+  <div class="logo">
+    <span class="logo-icon">⬡</span>
+    NETFORGE
+  </div>
+  <div class="header-actions">
+    <button class="btn primary" id="btn-simulate">▶ SIMULATE</button>
+    <button class="btn success" id="btn-export">⬇ EXPORT</button>
+    <button class="btn danger" id="btn-clear">✕ CLEAR</button>
+    <div style="width:1px;height:24px;background:var(--border);margin:0 10px;"></div>
+    <button class="panel-toggle" id="btn-theme" title="Toggle Day/Night Mode">
+      <svg id="theme-icon-moon" viewBox="0 0 24 24" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+  <div class="header-divider"></div>
+  <button class="panel-toggle active" id="toggle-right" title="Toggle Properties Panel">
+    <svg viewBox="0 0 24 24"><rect x="14" y="3" width="7" height="18" rx="1"/><line x1="3" y1="6" x2="10" y2="6"/><line x1="3" y1="12" x2="10" y2="12"/><line x1="3" y1="18" x2="10" y2="18"/></svg>
+  </button>
+</header>
+
+<div class="main">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar-left">
+    <div class="sidebar-section">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sidebar-title">Components</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div class="component-grid">
+        <div class="component-item ci-router" draggable="true" data-type="router">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="20" height="8" rx="2"/><circle cx="6" cy="12" r="1.5" fill="currentColor"/><circle cx="10" cy="12" r="1.5" fill="currentColor"/><line x1="15" y1="10" x2="20" y2="10"/><line x1="15" y1="14" x2="20" y2="14"/><line x1="12" y1="4" x2="12" y2="8"/><line x1="9" y1="4" x2="15" y2="4"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg></div>
+          <div class="ci-label">Router</div>
+        </div>
+        <div class="component-item ci-switch" draggable="true" data-type="switch">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/><line x1="6" y1="14" x2="6" y2="18"/><line x1="18" y1="14" x2="18" y2="18"/></svg></div>
+          <div class="ci-label">Switch</div>
+        </div>
+        <div class="component-item ci-hub" draggable="true" data-type="hub">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="8.17" y2="8.17"/><line x1="15.83" y1="15.83" x2="19.07" y2="19.07"/></svg></div>
+          <div class="ci-label">Hub</div>
+        </div>
+        <div class="component-item ci-firewall" draggable="true" data-type="firewall">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="9"/><line x1="15" y1="9" x2="15" y2="15"/><line x1="9" y1="15" x2="9" y2="21"/></svg></div>
+          <div class="ci-label">Firewall</div>
+        </div>
+        <div class="component-item ci-server" draggable="true" data-type="server">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="6" rx="1"/><rect x="4" y="10" width="16" height="6" rx="1"/><circle cx="8" cy="5" r="1" fill="currentColor"/><circle cx="8" cy="13" r="1" fill="currentColor"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
+          <div class="ci-label">Server</div>
+        </div>
+        <div class="component-item ci-pc" draggable="true" data-type="pc">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="12" rx="2"/><line x1="12" y1="15" x2="12" y2="19"/><line x1="7" y1="19" x2="17" y2="19"/></svg></div>
+          <div class="ci-label">PC</div>
+        </div>
+        <div class="component-item ci-ap" draggable="true" data-type="ap">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.64 18.36A9 9 0 0118.36 5.64"/><path d="M8.46 15.54A5 5 0 0115.54 8.46"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><line x1="12" y1="13.5" x2="12" y2="22"/></svg></div>
+          <div class="ci-label">Access Pt</div>
+        </div>
+        <div class="component-item ci-cloud" draggable="true" data-type="cloud">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 10h1a4 4 0 010 8H6a4 4 0 01-.85-7.91A6 6 0 0118 10z"/></svg></div>
+          <div class="ci-label">Cloud</div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sidebar-title">Templates</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div class="template-list">
+        <button class="template-btn" data-template="star"><span>✦</span> Star</button>
+        <button class="template-btn" data-template="bus"><span>━</span> Bus</button>
+        <button class="template-btn" data-template="ring"><span>◎</span> Ring</button>
+        <button class="template-btn" data-template="mesh"><span>⬡</span> Full Mesh</button>
+        <button class="template-btn" data-template="tree"><span>⏅</span> Tree</button>
+        <button class="template-btn" data-template="hybrid"><span>⊞</span> Hybrid</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="sidebar-title">Link Technology</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div class="tech-options">
+        <div class="tech-option active" data-tech="ethernet">
+          <div class="tech-dot" style="background:#2a6090"></div> Ethernet
+        </div>
+        <div class="tech-option" data-tech="fiber">
+          <div class="tech-dot" style="background:var(--accent)"></div> Fiber Optic
+        </div>
+        <div class="tech-option" data-tech="wifi">
+          <div class="tech-dot" style="background:#ff88aa"></div> Wi-Fi
+        </div>
+        <div class="tech-option" data-tech="wan">
+          <div class="tech-dot" style="background:var(--accent3)"></div> WAN / MPLS
+        </div>
+        <div class="tech-option" data-tech="vpn">
+          <div class="tech-dot" style="background:#aa88ff"></div> VPN Tunnel
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area" id="canvas">
+    <div class="canvas-inner" id="canvas-inner">
+      <svg id="svg-layer"></svg>
+      <div class="canvas-hint" id="canvas-hint">
+        <div class="hint-icon">⬡</div>
+        <p>Drag components from the left panel<br>or choose a template to get started.<br><br>Scroll to zoom · Middle-click to pan<br>Click a node, then click another to connect.</p>
+      </div>
+    </div>
+
+    <div class="zoom-indicator" id="zoom-indicator">100%</div>
+
+    <div class="canvas-toolbar">
+      <div class="tool-btn active" id="tool-select" data-tip="SELECT"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 2-3 7z"/></svg></div>
+      <div class="tool-btn" id="tool-connect" data-tip="CONNECT"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+      <div class="tool-btn" id="tool-delete" data-tip="DELETE"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div class="tool-btn" id="tool-zoom-in" data-tip="ZOOM IN"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+      <div class="tool-btn" id="tool-zoom-out" data-tip="ZOOM OUT"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+      <div class="tool-btn" id="tool-fit" data-tip="FIT ALL"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar-right">
+    <div class="info-panel">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="info-title">Properties</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div id="properties-content">
+        <div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px 0">
+          Select a node to<br>view properties
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="info-title">Network Stats</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div class="prop-row">
+        <span class="prop-label">Nodes</span>
+        <span class="prop-value" id="rstat-nodes">0</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Links</span>
+        <span class="prop-value" id="rstat-links">0</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Topology</span>
+        <span class="prop-value" id="rstat-topo">Unknown</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Redundancy</span>
+        <span class="prop-value" id="rstat-redun">None</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Avg Hops</span>
+        <span class="prop-value" id="rstat-hops">—</span>
+      </div>
+      </div>
+    </div>
+    <div class="log-area">
+      <div class="accordion-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="info-title" style="padding-bottom:0">Event Log</div>
+        <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-content">
+        <div id="log-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Confirm</h3>
+    <p id="modal-body">Are you sure?</p>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const state = {
+  nodes: [],
+  links: [],
+  selectedNode: null,
+  connectingFrom: null,
+  currentTool: 'select',
+  currentTech: 'ethernet',
+  simRunning: false,
+  nodeCounter: {},
+  packets: [],
+  simInterval: null,
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0
+};
+
+const SVG_ICONS = {
+  router:   '<svg viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="2"/><circle cx="6" cy="12" r="1.5" fill="currentColor"/><circle cx="10" cy="12" r="1.5" fill="currentColor"/><line x1="15" y1="10" x2="20" y2="10"/><line x1="15" y1="14" x2="20" y2="14"/><line x1="12" y1="4" x2="12" y2="8"/><line x1="9" y1="4" x2="15" y2="4"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>',
+  switch:   '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/><line x1="6" y1="14" x2="6" y2="18"/><line x1="18" y1="14" x2="18" y2="18"/></svg>',
+  hub:      '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="8.17" y2="8.17"/><line x1="15.83" y1="15.83" x2="19.07" y2="19.07"/></svg>',
+  firewall: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="9"/><line x1="15" y1="9" x2="15" y2="15"/><line x1="9" y1="15" x2="9" y2="21"/></svg>',
+  server:   '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="6" rx="1"/><rect x="4" y="10" width="16" height="6" rx="1"/><circle cx="8" cy="5" r="1" fill="currentColor"/><circle cx="8" cy="13" r="1" fill="currentColor"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>',
+  pc:       '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="12" rx="2"/><line x1="12" y1="15" x2="12" y2="19"/><line x1="7" y1="19" x2="17" y2="19"/></svg>',
+  ap:       '<svg viewBox="0 0 24 24"><path d="M5.64 18.36A9 9 0 0118.36 5.64"/><path d="M8.46 15.54A5 5 0 0115.54 8.46"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><line x1="12" y1="13.5" x2="12" y2="22"/></svg>',
+  cloud:    '<svg viewBox="0 0 24 24"><path d="M18 10h1a4 4 0 010 8H6a4 4 0 01-.85-7.91A6 6 0 0118 10z"/></svg>'
+};
+
+const NODE_TYPES = {
+  router:   { icon: SVG_ICONS.router,   label: 'Router',    abbr: 'R',  color: '#00d4ff' },
+  switch:   { icon: SVG_ICONS.switch,   label: 'Switch',    abbr: 'SW', color: '#00ff88' },
+  hub:      { icon: SVG_ICONS.hub,      label: 'Hub',       abbr: 'HUB',color: '#ffcc00' },
+  firewall: { icon: SVG_ICONS.firewall, label: 'Firewall',  abbr: 'FW', color: '#ff6b35' },
+  server:   { icon: SVG_ICONS.server,   label: 'Server',    abbr: 'SRV',color: '#aa88ff' },
+  pc:       { icon: SVG_ICONS.pc,       label: 'PC',        abbr: 'PC', color: '#88ccff' },
+  ap:       { icon: SVG_ICONS.ap,       label: 'Access Pt', abbr: 'AP', color: '#ff88aa' },
+  cloud:    { icon: SVG_ICONS.cloud,    label: 'Cloud',     abbr: 'CLD',color: '#88ddff' }
+};
+
+const TECH_SPEED = {
+  ethernet: '1 Gbps',
+  fiber:    '100 Gbps',
+  wifi:     '600 Mbps',
+  wan:      '10 Gbps',
+  vpn:      '500 Mbps'
+};
+
+let nodeIdCounter = 0;
+let linkIdCounter = 0;
+
+// ═══════════════════════════════════════════════════
+//  DOM
+// ═══════════════════════════════════════════════════
+const canvas = document.getElementById('canvas');
+const canvasInner = document.getElementById('canvas-inner');
+const svgLayer = document.getElementById('svg-layer');
+const logContainer = document.getElementById('log-container');
+const hint = document.getElementById('canvas-hint');
+
+document.getElementById('toggle-left').addEventListener('click', function() {
+  this.classList.toggle('active');
+  document.querySelector('.sidebar-left').classList.toggle('collapsed');
+});
+
+document.getElementById('toggle-right').addEventListener('click', function() {
+  this.classList.toggle('active');
+  document.querySelector('.sidebar-right').classList.toggle('collapsed');
+});
+
+document.getElementById('btn-theme').addEventListener('click', function() {
+  document.documentElement.classList.toggle('day-mode');
+  const isDay = document.documentElement.classList.contains('day-mode');
+  document.getElementById('theme-icon-sun').style.display = isDay ? 'none' : 'block';
+  document.getElementById('theme-icon-moon').style.display = isDay ? 'block' : 'none';
+  localStorage.setItem('netforge-theme', isDay ? 'day' : 'night');
+});
+
+// Load theme on startup
+if (localStorage.getItem('netforge-theme') === 'day') {
+  document.documentElement.classList.add('day-mode');
+  document.getElementById('theme-icon-sun').style.display = 'none';
+  document.getElementById('theme-icon-moon').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  LOGGING
+// ═══════════════════════════════════════════════════
+function log(msg, type = '') {
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const el = document.createElement('div');
+  el.className = `log-entry log-${type}`;
+  el.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${msg}</span>`;
+  logContainer.prepend(el);
+  if (logContainer.children.length > 40) logContainer.lastChild.remove();
+}
+
+// ═══════════════════════════════════════════════════
+//  TECH SELECTION
+// ═══════════════════════════════════════════════════
+document.querySelectorAll('.tech-option').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.tech-option').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    state.currentTech = el.dataset.tech;
+    log(`Link technology: ${el.dataset.tech.toUpperCase()}`, 'info');
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  TOOLS
+// ═══════════════════════════════════════════════════
+const zoomIndicator = document.getElementById('zoom-indicator');
+let zoomIndicatorTimeout = null;
+
+function updateCanvasCursor() {
+  canvas.classList.remove('tool-connect-cursor', 'tool-delete-cursor');
+  if (state.currentTool === 'connect') canvas.classList.add('tool-connect-cursor');
+  if (state.currentTool === 'delete') canvas.classList.add('tool-delete-cursor');
+}
+
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.id;
+    if (id === 'tool-zoom-in') { zoomAtCenter(1.25); return; }
+    if (id === 'tool-zoom-out') { zoomAtCenter(0.8); return; }
+    if (id === 'tool-fit') { fitAll(); return; }
+    ['tool-select','tool-connect','tool-delete'].forEach(t => document.getElementById(t)?.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentTool = id.replace('tool-', '');
+    if (state.currentTool !== 'connect') cancelConnect();
+    if (state.currentTool === 'connect') log('Connect mode: click source node, then target', 'info');
+    if (state.currentTool === 'delete') log('Delete mode: click node or link to remove', 'warn');
+    updateCanvasCursor();
+  });
+});
+
+function showZoomLevel() {
+  zoomIndicator.textContent = `${Math.round(state.scale * 100)}%`;
+  zoomIndicator.style.opacity = '1';
+  clearTimeout(zoomIndicatorTimeout);
+  zoomIndicatorTimeout = setTimeout(() => { zoomIndicator.style.opacity = '0.4'; }, 1200);
+}
+
+function applyTransform() {
+  canvasInner.style.transform = `translate(${state.offsetX}px, ${state.offsetY}px) scale(${state.scale})`;
+  showZoomLevel();
+}
+
+// Zoom towards a specific point (cursor or center)
+function zoomAt(factor, clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const cx = clientX - rect.left;
+  const cy = clientY - rect.top;
+  const newScale = Math.min(4, Math.max(0.15, state.scale * factor));
+  const ratio = newScale / state.scale;
+  state.offsetX = cx - ratio * (cx - state.offsetX);
+  state.offsetY = cy - ratio * (cy - state.offsetY);
+  state.scale = newScale;
+  applyTransform();
+}
+
+function zoomAtCenter(factor) {
+  const rect = canvas.getBoundingClientRect();
+  zoomAt(factor, rect.left + rect.width / 2, rect.top + rect.height / 2);
+}
+
+// Mouse wheel zoom (to cursor)
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 0.89;
+  zoomAt(factor, e.clientX, e.clientY);
+}, { passive: false });
+
+// Pan with middle mouse or Space+left mouse
+let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+let spaceHeld = false;
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    spaceHeld = true;
+    canvas.style.cursor = 'grab';
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') {
+    spaceHeld = false;
+    if (!isPanning) { canvas.style.cursor = ''; updateCanvasCursor(); }
+  }
+});
+
+canvas.addEventListener('mousedown', e => {
+  // Middle mouse button, Space+left, or left-click on empty canvas = pan
+  const isEmptyArea = e.target === canvas || e.target === canvasInner || e.target === svgLayer || e.target.id === 'canvas-hint' || e.target.closest('.canvas-hint');
+  if (e.button === 1 || (spaceHeld && e.button === 0) || (e.button === 0 && isEmptyArea)) {
+    e.preventDefault();
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    panOrigX = state.offsetX;
+    panOrigY = state.offsetY;
+    canvas.classList.add('panning');
+    canvas.style.cursor = 'grabbing';
+    return;
+  }
+});
+
+document.addEventListener('mousemove', e => {
+  if (isPanning) {
+    state.offsetX = panOrigX + (e.clientX - panStartX);
+    state.offsetY = panOrigY + (e.clientY - panStartY);
+    applyTransform();
+  }
+  if (rubberBanding) updateRubberBand(e);
+});
+
+document.addEventListener('mouseup', e => {
+  if (isPanning) {
+    isPanning = false;
+    canvas.classList.remove('panning');
+    canvas.style.cursor = spaceHeld ? 'grab' : '';
+    if (!spaceHeld) updateCanvasCursor();
+  }
+  if (rubberBanding) endRubberBand(e);
+});
+
+// Rubber-band selection
+let rubberBanding = false, rbEl = null, rbStartX = 0, rbStartY = 0;
+
+function startRubberBand(e) {
+  const rect = canvas.getBoundingClientRect();
+  rbStartX = e.clientX - rect.left;
+  rbStartY = e.clientY - rect.top;
+  rbEl = document.createElement('div');
+  rbEl.className = 'rubber-band';
+  rbEl.style.left = rbStartX + 'px';
+  rbEl.style.top = rbStartY + 'px';
+  rbEl.style.width = '0px';
+  rbEl.style.height = '0px';
+  canvas.appendChild(rbEl);
+  rubberBanding = true;
+}
+
+function updateRubberBand(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const x = Math.min(rbStartX, mx);
+  const y = Math.min(rbStartY, my);
+  const w = Math.abs(mx - rbStartX);
+  const h = Math.abs(my - rbStartY);
+  rbEl.style.left = x + 'px';
+  rbEl.style.top = y + 'px';
+  rbEl.style.width = w + 'px';
+  rbEl.style.height = h + 'px';
+}
+
+function endRubberBand(e) {
+  rubberBanding = false;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const x1 = Math.min(rbStartX, mx);
+  const y1 = Math.min(rbStartY, my);
+  const x2 = Math.max(rbStartX, mx);
+  const y2 = Math.max(rbStartY, my);
+  // Only select if drag was more than 5px
+  if (x2 - x1 > 5 || y2 - y1 > 5) {
+    let found = null;
+    state.nodes.forEach(n => {
+      const nx = n.x * state.scale + state.offsetX + 28 * state.scale;
+      const ny = n.y * state.scale + state.offsetY + 28 * state.scale;
+      if (nx >= x1 && nx <= x2 && ny >= y1 && ny <= y2) {
+        found = n.id;  // select last found
+      }
+    });
+    if (found !== null) selectNode(found);
+    else selectNode(null);
+  }
+  rbEl?.remove();
+  rbEl = null;
+}
+
+function fitAll() {
+  if (state.nodes.length === 0) { state.offsetX = 0; state.offsetY = 0; state.scale = 1; applyTransform(); return; }
+  const rect = canvas.getBoundingClientRect();
+  const xs = state.nodes.map(n => n.x);
+  const ys = state.nodes.map(n => n.y);
+  const padding = 80;
+  const minX = Math.min(...xs) - padding;
+  const maxX = Math.max(...xs) + 56 + padding;
+  const minY = Math.min(...ys) - padding;
+  const maxY = Math.max(...ys) + 56 + padding;
+  const contentW = maxX - minX;
+  const contentH = maxY - minY;
+  const scaleX = rect.width / contentW;
+  const scaleY = rect.height / contentH;
+  state.scale = Math.min(scaleX, scaleY, 1.5);
+  state.offsetX = (rect.width - contentW * state.scale) / 2 - minX * state.scale;
+  state.offsetY = (rect.height - contentH * state.scale) / 2 - minY * state.scale;
+  applyTransform();
+}
+
+// ═══════════════════════════════════════════════════
+//  DRAG FROM SIDEBAR
+// ═══════════════════════════════════════════════════
+let dragType = null;
+
+document.querySelectorAll('.component-item').forEach(el => {
+  el.addEventListener('dragstart', e => {
+    dragType = el.dataset.type;
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+});
+
+canvas.addEventListener('dragover', e => e.preventDefault());
+
+canvas.addEventListener('drop', e => {
+  e.preventDefault();
+  if (!dragType) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left - state.offsetX) / state.scale - 28;
+  const y = (e.clientY - rect.top - state.offsetY) / state.scale - 28;
+  addNode(dragType, x, y);
+  dragType = null;
+});
+
+// ═══════════════════════════════════════════════════
+//  NODES
+// ═══════════════════════════════════════════════════
+function addNode(type, x, y, customLabel = null) {
+  if (!state.nodeCounter[type]) state.nodeCounter[type] = 0;
+  state.nodeCounter[type]++;
+  const nt = NODE_TYPES[type];
+  const id = ++nodeIdCounter;
+  const label = customLabel || `${nt.abbr}-${state.nodeCounter[type]}`;
+  const ip = `192.168.${Math.floor(Math.random()*5)+1}.${Math.floor(Math.random()*250)+2}`;
+  const node = { id, type, x, y, label, ip, status: 'online', tech: state.currentTech };
+  state.nodes.push(node);
+  renderNode(node);
+  updateStats();
+  hint.style.display = 'none';
+  log(`Added ${nt.label} "${label}" at (${Math.round(x)}, ${Math.round(y)})`, 'ok');
+  return node;
+}
+
+function renderNode(node) {
+  const el = document.createElement('div');
+  el.className = `network-node nt-${node.type}`;
+  el.id = `node-${node.id}`;
+  el.style.left = `${node.x}px`;
+  el.style.top = `${node.y}px`;
+
+  const nt = NODE_TYPES[node.type];
+  el.innerHTML = `
+    <div class="node-body">
+      ${nt.icon}
+      <button class="node-delete" onclick="deleteNode(${node.id})">✕</button>
+    </div>
+    <div class="node-label">${node.label}</div>
+  `;
+
+  // Click
+  el.addEventListener('click', e => {
+    if (e.target.classList.contains('node-delete')) return;
+    handleNodeClick(node.id);
+  });
+
+  // Drag within canvas
+  let dragging = false, dragStartX, dragStartY, origX, origY;
+  el.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('node-delete')) return;
+    if (state.currentTool === 'connect') return;
+    if (spaceHeld) return;
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    origX = node.x;
+    origY = node.y;
+    el.style.zIndex = 100;
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = (e.clientX - dragStartX) / state.scale;
+    const dy = (e.clientY - dragStartY) / state.scale;
+    node.x = origX + dx;
+    node.y = origY + dy;
+    el.style.left = `${node.x}px`;
+    el.style.top = `${node.y}px`;
+    renderLinks();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      el.style.zIndex = 10;
+    }
+  });
+
+  canvasInner.appendChild(el);
+}
+
+function handleNodeClick(nodeId) {
+  if (state.currentTool === 'delete') {
+    deleteNode(nodeId);
+    return;
+  }
+  if (state.currentTool === 'connect') {
+    if (!state.connectingFrom) {
+      state.connectingFrom = nodeId;
+      document.getElementById(`node-${nodeId}`)?.classList.add('connecting-source');
+      log('Select target node to connect…', 'info');
+    } else if (state.connectingFrom !== nodeId) {
+      createLink(state.connectingFrom, nodeId);
+      cancelConnect();
+    }
+    return;
+  }
+  // Select
+  selectNode(nodeId === state.selectedNode ? null : nodeId);
+}
+
+function selectNode(nodeId) {
+  document.querySelectorAll('.network-node').forEach(el => el.classList.remove('selected'));
+  state.selectedNode = nodeId;
+  if (nodeId !== null) {
+    document.getElementById(`node-${nodeId}`)?.classList.add('selected');
+    showProperties(state.nodes.find(n => n.id === nodeId));
+  } else {
+    showProperties(null);
+  }
+}
+
+function showProperties(node) {
+  const el = document.getElementById('properties-content');
+  if (!node) {
+    el.innerHTML = `<div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px 0">Select a node to<br>view properties</div>`;
+    return;
+  }
+  const nt = NODE_TYPES[node.type];
+  el.innerHTML = `
+    <div class="prop-row"><span class="prop-label">Type</span><span class="prop-value">${nt.label}</span></div>
+    <div class="prop-row">
+      <span class="prop-label">Name</span>
+      <input class="prop-input" id="prop-name" value="${node.label}" style="width:90px">
+    </div>
+    <div class="prop-row">
+      <span class="prop-label">IP Address</span>
+      <input class="prop-input" id="prop-ip" value="${node.ip}" style="width:110px">
+    </div>
+    <div class="prop-row">
+      <span class="prop-label">Status</span>
+      <select class="prop-input" id="prop-status" style="width:80px">
+        <option value="online" ${node.status==='online'?'selected':''}>Online</option>
+        <option value="offline" ${node.status==='offline'?'selected':''}>Offline</option>
+      </select>
+    </div>
+    <div class="prop-row"><span class="prop-label">Connections</span><span class="prop-value">${state.links.filter(l=>l.from===node.id||l.to===node.id).length}</span></div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" style="font-size:11px;padding:4px 8px" onclick="applyProps(${node.id})">Apply</button>
+      <button class="btn danger" style="font-size:11px;padding:4px 8px" onclick="deleteNode(${node.id})">Delete</button>
+    </div>
+  `;
+}
+
+function applyProps(nodeId) {
+  const node = state.nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  const name = document.getElementById('prop-name')?.value;
+  const ip = document.getElementById('prop-ip')?.value;
+  const status = document.getElementById('prop-status')?.value;
+  if (name) { node.label = name; document.querySelector(`#node-${nodeId} .node-label`).textContent = name; }
+  if (ip) node.ip = ip;
+  if (status) node.status = status;
+  log(`Updated node "${node.label}"`, 'ok');
+  showProperties(node);
+}
+
+function cancelConnect() {
+  if (state.connectingFrom) {
+    document.getElementById(`node-${state.connectingFrom}`)?.classList.remove('connecting-source');
+    state.connectingFrom = null;
+  }
+  svgLayer.querySelectorAll('.connect-line').forEach(e => e.remove());
+}
+
+window.deleteNode = function(nodeId) {
+  const node = state.nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  state.links = state.links.filter(l => l.from !== nodeId && l.to !== nodeId);
+  state.nodes = state.nodes.filter(n => n.id !== nodeId);
+  document.getElementById(`node-${nodeId}`)?.remove();
+  if (state.selectedNode === nodeId) selectNode(null);
+  renderLinks();
+  updateStats();
+  log(`Removed node "${node.label}"`, 'warn');
+  if (state.nodes.length === 0) hint.style.display = '';
+};
+
+// ═══════════════════════════════════════════════════
+//  LINKS
+// ═══════════════════════════════════════════════════
+function createLink(fromId, toId) {
+  // Check duplicate
+  if (state.links.find(l => (l.from===fromId&&l.to===toId)||(l.from===toId&&l.to===fromId))) {
+    log('Link already exists between those nodes', 'warn');
+    return;
+  }
+  const id = ++linkIdCounter;
+  const link = { id, from: fromId, to: toId, tech: state.currentTech };
+  state.links.push(link);
+  renderLinks();
+  updateStats();
+  const a = state.nodes.find(n=>n.id===fromId);
+  const b = state.nodes.find(n=>n.id===toId);
+  log(`Connected "${a?.label}" ↔ "${b?.label}" via ${state.currentTech.toUpperCase()} (${TECH_SPEED[state.currentTech]})`, 'ok');
+}
+
+function getNodeCenter(nodeId) {
+  const node = state.nodes.find(n => n.id === nodeId);
+  if (!node) return null;
+  return { x: node.x + 28, y: node.y + 28 };
+}
+
+function renderLinks() {
+  svgLayer.querySelectorAll('.link-line, .link-hit').forEach(e => e.remove());
+  state.links.forEach(link => {
+    const a = getNodeCenter(link.from);
+    const b = getNodeCenter(link.to);
+    if (!a || !b) return;
+
+    // Hit area
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    hit.setAttribute('x1', a.x); hit.setAttribute('y1', a.y);
+    hit.setAttribute('x2', b.x); hit.setAttribute('y2', b.y);
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '12');
+    hit.classList.add('link-hit');
+    hit.style.cursor = 'pointer';
+    hit.style.pointerEvents = 'stroke';
+    hit.addEventListener('click', () => {
+      if (state.currentTool === 'delete') deleteLink(link.id);
+    });
+    svgLayer.appendChild(hit);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    line.classList.add('link-line', `lt-${link.tech}`);
+    svgLayer.appendChild(line);
+  });
+}
+
+function deleteLink(linkId) {
+  const link = state.links.find(l => l.id === linkId);
+  if (!link) return;
+  state.links = state.links.filter(l => l.id !== linkId);
+  renderLinks();
+  updateStats();
+  log('Link removed', 'warn');
+}
+
+// Canvas click to deselect
+canvas.addEventListener('click', e => {
+  if (isPanning || rubberBanding) return;
+  if (e.target === canvas || e.target === canvasInner || e.target === svgLayer || e.target.closest('.canvas-hint')) {
+    if (state.currentTool === 'select') selectNode(null);
+    if (state.currentTool === 'connect') cancelConnect();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+//  MOUSE HOVER CONNECT LINE
+// ═══════════════════════════════════════════════════
+canvas.addEventListener('mousemove', e => {
+  if (state.currentTool !== 'connect' || !state.connectingFrom) return;
+  svgLayer.querySelectorAll('.connect-line').forEach(el => el.remove());
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left - state.offsetX) / state.scale;
+  const my = (e.clientY - rect.top - state.offsetY) / state.scale;
+  const a = getNodeCenter(state.connectingFrom);
+  if (!a) return;
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+  line.setAttribute('x2', mx); line.setAttribute('y2', my);
+  line.classList.add('connect-line');
+  svgLayer.appendChild(line);
+});
+
+// ═══════════════════════════════════════════════════
+//  TEMPLATES
+// ═══════════════════════════════════════════════════
+const TEMPLATES = {
+  star: () => {
+    const cx = 400, cy = 280;
+    const sw = addNode('switch', cx - 28, cy - 28, 'SW-Core');
+    const r = 180;
+    const devices = ['pc','pc','pc','server','pc','ap'];
+    devices.forEach((t, i) => {
+      const angle = (i / devices.length) * Math.PI * 2 - Math.PI/2;
+      const n = addNode(t, cx + Math.cos(angle)*r - 28, cy + Math.sin(angle)*r - 28);
+      createLink(sw.id, n.id);
+    });
+    log('Star topology loaded', 'info');
+  },
+  bus: () => {
+    const nodes = ['router','switch','pc','pc','server','pc'];
+    const startX = 100, y = 250, spacing = 140;
+    const created = nodes.map((t, i) => addNode(t, startX + i*spacing, y));
+    for (let i = 0; i < created.length - 1; i++) createLink(created[i].id, created[i+1].id);
+    log('Bus topology loaded', 'info');
+  },
+  ring: () => {
+    const cx = 400, cy = 280, r = 180;
+    const types = ['router','switch','pc','server','pc','switch','pc','pc'];
+    const created = types.map((t, i) => {
+      const angle = (i / types.length) * Math.PI * 2 - Math.PI/2;
+      return addNode(t, cx + Math.cos(angle)*r - 28, cy + Math.sin(angle)*r - 28);
+    });
+    created.forEach((n, i) => createLink(n.id, created[(i+1)%created.length].id));
+    log('Ring topology loaded', 'info');
+  },
+  mesh: () => {
+    const positions = [[300,150],[500,150],[200,300],[400,300],[600,300],[300,450],[500,450]];
+    const types = ['router','router','router','switch','router','server','pc'];
+    const created = positions.map(([x,y],i) => addNode(types[i], x, y));
+    // Full mesh between routers
+    for (let i = 0; i < created.length; i++)
+      for (let j = i+1; j < created.length; j++)
+        if (Math.random() > 0.25) createLink(created[i].id, created[j].id);
+    log('Mesh topology loaded', 'info');
+  },
+  tree: () => {
+    const root = addNode('router', 370, 60, 'R-Root');
+    const l1a = addNode('switch', 200, 180, 'SW-L1A');
+    const l1b = addNode('switch', 530, 180, 'SW-L1B');
+    createLink(root.id, l1a.id);
+    createLink(root.id, l1b.id);
+    ['pc','server','pc'].forEach((t,i) => {
+      const n = addNode(t, 80+i*100, 330);
+      createLink(l1a.id, n.id);
+    });
+    ['pc','server','pc'].forEach((t,i) => {
+      const n = addNode(t, 410+i*100, 330);
+      createLink(l1b.id, n.id);
+    });
+    log('Tree topology loaded', 'info');
+  },
+  hybrid: () => {
+    // Star core + ring departments
+    const fw = addNode('firewall', 370, 60, 'FW-Edge');
+    const cloud = addNode('cloud', 370, -60, 'Internet');
+    createLink(fw.id, cloud.id);
+    const core = addNode('router', 370, 180, 'R-Core');
+    createLink(fw.id, core.id);
+    // Two department stars
+    const sw1 = addNode('switch', 180, 340, 'SW-Dept1');
+    const sw2 = addNode('switch', 560, 340, 'SW-Dept2');
+    createLink(core.id, sw1.id); createLink(core.id, sw2.id);
+    ['pc','server','pc'].forEach((t,i) => { const n = addNode(t, 60+i*110, 460); createLink(sw1.id,n.id); });
+    ['pc','server','pc'].forEach((t,i) => { const n = addNode(t, 440+i*110, 460); createLink(sw2.id,n.id); });
+    // Ring between two depts via core
+    const ap1 = addNode('ap', 180, 220, 'AP-1');
+    const ap2 = addNode('ap', 560, 220, 'AP-2');
+    createLink(core.id,ap1.id); createLink(core.id,ap2.id);
+    log('Hybrid topology loaded', 'info');
+  }
+};
+
+document.querySelectorAll('.template-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (state.nodes.length > 0) {
+      showModal('Load Template', 'This will clear the current canvas. Continue?', [
+        { label: 'Cancel', action: () => closeModal() },
+        { label: 'Load Template', cls: 'primary', action: () => { clearCanvas(); TEMPLATES[btn.dataset.template](); closeModal(); fitAll(); } }
+      ]);
+    } else {
+      TEMPLATES[btn.dataset.template]();
+      fitAll();
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  SIMULATION
+// ═══════════════════════════════════════════════════
+document.getElementById('btn-simulate').addEventListener('click', () => {
+  if (state.simRunning) stopSimulation();
+  else startSimulation();
+});
+
+function startSimulation() {
+  if (state.nodes.length < 2 || state.links.length === 0) {
+    log('Need at least 2 connected nodes to simulate', 'err');
+    return;
+  }
+  state.simRunning = true;
+  document.getElementById('sim-status').className = 'sim-status active';
+  document.getElementById('sim-status').innerHTML = '<div class="status-dot"></div> RUNNING';
+  document.getElementById('btn-simulate').textContent = '⏹ STOP';
+  log('Simulation started — packet routing active', 'ok');
+
+  state.simInterval = setInterval(() => {
+    if (state.links.length === 0) return;
+    const link = state.links[Math.floor(Math.random() * state.links.length)];
+    const reverse = Math.random() > 0.5;
+    animatePacket(reverse ? link.to : link.from, reverse ? link.from : link.to, link.tech);
+    if (Math.random() > 0.85) {
+      const n1 = state.nodes.find(n=>n.id===link.from);
+      const n2 = state.nodes.find(n=>n.id===link.to);
+      if (n1 && n2) log(`PING ${n1.ip} → ${n2.ip} [${TECH_SPEED[link.tech]}]`, 'ok');
+    }
+  }, 600);
+}
+
+function stopSimulation() {
+  state.simRunning = false;
+  clearInterval(state.simInterval);
+  document.getElementById('sim-status').className = 'sim-status';
+  document.getElementById('sim-status').innerHTML = '<div class="status-dot"></div> IDLE';
+  document.getElementById('btn-simulate').textContent = '▶ SIMULATE';
+  // Remove all packets
+  document.querySelectorAll('.packet').forEach(e => e.remove());
+  log('Simulation stopped', 'warn');
+}
+
+function animatePacket(fromId, toId, tech) {
+  const a = getNodeCenter(fromId);
+  const b = getNodeCenter(toId);
+  if (!a || !b) return;
+
+  const colors = { ethernet:'#2a6090', fiber:'#00d4ff', wifi:'#ff88aa', wan:'#ff6b35', vpn:'#aa88ff' };
+  const packet = document.createElement('div');
+  packet.className = 'packet';
+  packet.style.left = `${a.x}px`;
+  packet.style.top = `${a.y}px`;
+  packet.style.background = colors[tech] || '#00ff88';
+  packet.style.boxShadow = `0 0 8px ${colors[tech] || '#00ff88'}`;
+  canvasInner.appendChild(packet);
+
+  const dist = Math.sqrt((b.x-a.x)**2 + (b.y-a.y)**2);
+  const duration = Math.max(400, dist * 1.5);
+  const start = performance.now();
+
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    packet.style.left = `${a.x + (b.x - a.x) * eased}px`;
+    packet.style.top = `${a.y + (b.y - a.y) * eased}px`;
+    if (t < 1) requestAnimationFrame(step);
+    else packet.remove();
+  }
+  requestAnimationFrame(step);
+}
+
+// ═══════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════
+function updateStats() {
+  const n = state.nodes.length;
+  const l = state.links.length;
+  document.getElementById('rstat-nodes').textContent = n;
+  document.getElementById('rstat-links').textContent = l;
+
+  const topo = detectTopology();
+  document.getElementById('rstat-topo').textContent = topo;
+
+  // Redundancy
+  const avgDeg = n > 0 ? (l * 2 / n).toFixed(1) : 0;
+  const redun = avgDeg >= 3 ? 'High' : avgDeg >= 2 ? 'Medium' : avgDeg > 0 ? 'Low' : 'None';
+  document.getElementById('rstat-redun').textContent = redun;
+
+  // Avg hops (simplified)
+  const hops = n > 1 ? (Math.log2(n) + 1).toFixed(1) : '—';
+  document.getElementById('rstat-hops').textContent = hops;
+}
+
+function detectTopology() {
+  const n = state.nodes.length;
+  const l = state.links.length;
+  if (n === 0) return 'Empty';
+  if (n === 1) return 'Single';
+  if (n < 2 || l === 0) return 'Disconnected';
+
+  const degrees = {};
+  state.nodes.forEach(node => { degrees[node.id] = 0; });
+  state.links.forEach(link => { degrees[link.from]++; degrees[link.to]++; });
+  const degVals = Object.values(degrees);
+  const maxDeg = Math.max(...degVals);
+  const minDeg = Math.min(...degVals);
+  const hubCount = degVals.filter(d => d === maxDeg && maxDeg > 2).length;
+
+  if (l === n * (n-1) / 2) return 'Full Mesh';
+  if (hubCount === 1 && minDeg === 1) return 'Star';
+  if (degVals.every(d => d === 2) && l === n) return 'Ring';
+  if (l === n - 1 && minDeg === 1) return degVals.filter(d=>d===1).length === 2 ? 'Bus / Linear' : 'Tree';
+  if (l > n) return 'Partial Mesh';
+  return 'Hybrid';
+}
+
+// ═══════════════════════════════════════════════════
+//  CLEAR & EXPORT
+// ═══════════════════════════════════════════════════
+function clearCanvas() {
+  stopSimulation();
+  state.nodes.forEach(n => document.getElementById(`node-${n.id}`)?.remove());
+  state.nodes = [];
+  state.links = [];
+  state.nodeCounter = {};
+  nodeIdCounter = 0; linkIdCounter = 0;
+  svgLayer.innerHTML = '';
+  selectNode(null);
+  updateStats();
+  hint.style.display = '';
+  log('Canvas cleared', 'warn');
+}
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (state.nodes.length === 0) return;
+  showModal('Clear Canvas', 'Remove all nodes and links?', [
+    { label: 'Cancel', action: closeModal },
+    { label: 'Clear All', cls: 'danger', action: () => { clearCanvas(); closeModal(); } }
+  ]);
+});
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = {
+    topology: detectTopology(),
+    nodes: state.nodes.map(n => ({ id:n.id, type:n.type, label:n.label, ip:n.ip, x:Math.round(n.x), y:Math.round(n.y) })),
+    links: state.links.map(l => ({ from:l.from, to:l.to, technology:l.tech, speed:TECH_SPEED[l.tech] }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `netforge-${detectTopology().toLowerCase().replace(/\s/g,'-')}.json`;
+  a.click();
+  log('Network exported as JSON', 'ok');
+});
+
+// ═══════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════
+function showModal(title, body, actions) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  const actEl = document.getElementById('modal-actions');
+  actEl.innerHTML = '';
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = `btn ${a.cls || ''}`;
+    btn.textContent = a.label;
+    btn.onclick = a.action;
+    actEl.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+// ═══════════════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (document.activeElement.tagName === 'INPUT') return;
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (state.selectedNode) deleteNode(state.selectedNode);
+  }
+  if (e.key === 'Escape') { cancelConnect(); selectNode(null); }
+  if (e.key === 'c' && !e.ctrlKey) document.getElementById('tool-connect').click();
+  if (e.key === 's' && !e.ctrlKey) document.getElementById('tool-select').click();
+  if (e.key === '=' || e.key === '+') zoomAtCenter(1.25);
+  if (e.key === '-') zoomAtCenter(0.8);
+  if (e.key === '0') { state.scale = 1; state.offsetX = 0; state.offsetY = 0; applyTransform(); }
+  if (e.key === 'f') fitAll();
+});
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+log('NetForge initialized — drag components or load a template', 'info');
+log('Shortcuts: [S] Select [C] Connect [Del] Delete [+/-] Zoom [F] Fit [Space] Pan', 'info');
+updateStats();
+showZoomLevel();
+</script>
+</body>
+</html>

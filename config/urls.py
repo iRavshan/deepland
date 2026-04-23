@@ -31,6 +31,7 @@ urlpatterns += i18n_patterns(
     path('courses/', include('apps.courses.urls')),
     path('challenges/', include('apps.challenges.urls')),
     path('deepwiki/', include('apps.glossary.urls')),
+    path('lab/', include('apps.lab.urls')),
     path('accounts/', include('allauth.urls')),
     path('privacy/', TemplateView.as_view(template_name='pages/privacy.html'), name='privacy'),
     path('terms/', TemplateView.as_view(template_name='pages/terms.html'), name='terms'),
