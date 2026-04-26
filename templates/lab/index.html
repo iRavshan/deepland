@@ -1,0 +1,192 @@
+{% extends '../shared/_base.html' %}
+{% load i18n %}
+
+{% block title %} {% trans "Virtual Lab" %} {% endblock %}
+
+{% block content %}
+<main class="container">
+    <div class="lab-header">
+        <h1 class="page-title">DeepLab</h1>
+        <p class="subtitle">{% trans "Explore interactive simulations and put your knowledge to the test in a safe, virtual environment." %}</p>
+    </div>
+
+    <div class="simulations-grid">
+        <!-- Computer Network Simulation -->
+        <a href="{% url 'computer_network' %}" class="sim-card sim-network">
+            <div class="sim-icon">
+                <i class="fa-solid fa-network-wired"></i>
+            </div>
+            <div class="sim-content">
+                <h2>{% trans "Computer Network" %}</h2>
+                <p>{% trans "Design, build, and test your own computer network topologies. Connect routers, switches, and PCs to understand how data flows." %}</p>
+            </div>
+            <div class="sim-action">
+                <span>{% trans "Launch Simulation" %}</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Logic Circuit Simulation -->
+        <a href="{% url 'logic_circuit' %}" class="sim-card sim-logic">
+            <div class="sim-icon">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div class="sim-content">
+                <h2>{% trans "Logic Circuit" %}</h2>
+                <p>{% trans "Build digital logic circuits using AND, OR, NOT, and XOR gates. See how digital electronics operate in real-time." %}</p>
+            </div>
+            <div class="sim-action">
+                <span>{% trans "Launch Simulation" %}</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+        </a>
+    </div>
+</main>
+
+<style>
+    .lab-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .lab-header .page-title {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+    }
+
+    .lab-header .subtitle {
+        font-size: 1.2rem;
+        color: var(--text-medium);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    .simulations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        padding-bottom: 50px;
+    }
+
+    .sim-card {
+        background: var(--bg-panel);
+        border: 2px solid var(--border-color);
+        border-radius: 24px;
+        padding: 40px 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .sim-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .sim-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: var(--theme-blue);
+        transition: height 0.3s;
+    }
+
+    .sim-card:hover::before {
+        height: 10px;
+    }
+
+    .sim-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 25px;
+        transition: transform 0.3s;
+    }
+
+    .sim-card:hover .sim-icon {
+        transform: scale(1.1);
+    }
+
+    /* Network Card Theme */
+    .sim-network {
+        border-color: var(--theme-blue-light);
+    }
+    .sim-network::before {
+        background: var(--theme-blue);
+    }
+    .sim-network .sim-icon {
+        background: var(--theme-blue-light);
+        color: var(--theme-blue);
+    }
+
+    /* Logic Card Theme */
+    .sim-logic {
+        border-color: var(--theme-purple-light);
+    }
+    .sim-logic::before {
+        background: var(--theme-purple);
+    }
+    .sim-logic .sim-icon {
+        background: var(--theme-purple-light);
+        color: var(--theme-purple);
+    }
+
+    .sim-content {
+        flex-grow: 1;
+        margin-bottom: 30px;
+    }
+
+    .sim-content h2 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+    }
+
+    .sim-content p {
+        font-size: 1.05rem;
+        color: var(--text-medium);
+        line-height: 1.6;
+    }
+
+    .sim-action {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        transition: gap 0.2s;
+    }
+
+    .sim-network .sim-action {
+        color: var(--theme-blue);
+    }
+
+    .sim-logic .sim-action {
+        color: var(--theme-purple);
+    }
+
+    .sim-card:hover .sim-action {
+        gap: 15px;
+    }
+
+    [data-theme="dark"] .sim-card {
+        background: var(--bg-panel);
+        border-color: var(--border-color);
+    }
+</style>
+{% endblock %}

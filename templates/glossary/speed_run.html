@@ -197,6 +197,10 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<audio id="correctSound" src="{% static 'audios/correct.mp3' %}"></audio>
+<audio id="incorrectSound" src="{% static 'audios/incorrect.mp3' %}"></audio>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- Game Config ---
@@ -254,10 +258,19 @@
             if (!isGameActive) return;
 
             if (isCorrect) {
+                document.getElementById('correctSound').play().catch(e => console.log(e));
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 1 },
+                    startVelocity: 45,
+                    angle: 90
+                });
                 score += 10;
                 correctCount++;
                 // Bonus for speed? Maybe later
             } else {
+                document.getElementById('incorrectSound').play().catch(e => console.log(e));
                 incorrectCount++;
             }
             updateUI();

@@ -433,6 +433,10 @@
     }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<audio id="correctSound" src="{% static 'audios/correct.mp3' %}"></audio>
+<audio id="incorrectSound" src="{% static 'audios/incorrect.mp3' %}"></audio>
+
 <script>
     const TEAM_COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6366f1'];
     const TEAM_COLORS_DARK = ['#b91c1c', '#1d4ed8', '#d97706', '#047857', '#be185d', '#4338ca'];
@@ -540,11 +544,20 @@
         card.classList.add('used');
 
         if (isCorrect) {
+            document.getElementById('correctSound').play().catch(e => console.log(e));
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 1 },
+                startVelocity: 45,
+                angle: 90
+            });
             scores[currentTeamIndex] += 1;
             card.classList.add('correct');
             card.style.background = TEAM_COLORS[currentTeamIndex];
             card.style.borderColor = TEAM_COLORS_DARK[currentTeamIndex];
         } else {
+            document.getElementById('incorrectSound').play().catch(e => console.log(e));
             card.classList.add('wrong');
             card.style.background = '#9ca3af';
             card.style.borderColor = '#6b7280';

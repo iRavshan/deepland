@@ -255,7 +255,7 @@
     }
     
     .highlight-streak .highlight-icon { background: rgba(255, 150, 0, 0.1); color: var(--theme-orange); }
-    .highlight-points .highlight-icon { background: rgba(28, 176, 246, 0.1); color: var(--theme-blue); }
+    .highlight-points .highlight-icon { background: rgba(28, 176, 246, 0.1); color: var(--theme-gold-dark); }
     .highlight-rank .highlight-icon { background: rgba(139, 92, 246, 0.1); color: var(--theme-purple); }
     
     .highlight-info {
@@ -482,7 +482,7 @@
                 </div>
             </div>
             <div class="highlight-card highlight-points">
-                <div class="highlight-icon"><i class="fa-solid fa-gem"></i></div>
+                <div class="highlight-icon"><i class="fa-solid fa-bolt"></i></div>
                 <div class="highlight-info">
                     <span class="highlight-title">{% trans "Points" %}</span>
                     <span class="highlight-value">{{ current_points|default:0 }}</span>
@@ -575,7 +575,7 @@
                         {% endif %}
                         <div class="user-item-info">
                             <span class="user-item-name">{{ f_user.first_name|default:f_user.email }}</span>
-                            <span class="user-item-points"><i class="fa-solid fa-star" style="color:var(--theme-gold)"></i> {{ f_user.points|default:0 }}</span>
+                            <span class="user-item-points"><i class="fa-solid fa-bolt" style="color:var(--theme-gold-dark)"></i> {{ f_user.points|default:0 }}</span>
                         </div>
                     </a>
                     {% endfor %}

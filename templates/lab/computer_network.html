@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NetForge — Network Topology Simulator</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    
 <style>
   :root {
     --bg: #070b12;
@@ -145,7 +150,7 @@
   }
 
   .sidebar-title {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Inter', monospace;
     font-size: 10px;
     letter-spacing: 2px;
     color: var(--text-dim);
@@ -306,7 +311,7 @@
     font-family: 'Share Tech Mono', monospace;
     font-size: 11px;
     color: var(--text-dim);
-    background: rgba(13,20,32,0.85);
+    background: var(--toolbar-bg);
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 4px 10px;
@@ -419,14 +424,14 @@
   .network-node.selected .node-delete { display: flex; }
 
   /* Node type styles */
-  .nt-router .node-body { background: rgba(0,100,150,0.2); border-color: var(--accent); color: var(--accent); }
-  .nt-switch .node-body { background: rgba(0,100,60,0.2); border-color: var(--accent2); color: var(--accent2); }
-  .nt-hub .node-body { background: rgba(100,80,0,0.2); border-color: var(--warn); color: var(--warn); }
-  .nt-firewall .node-body { background: rgba(100,50,20,0.2); border-color: var(--accent3); color: var(--accent3); }
-  .nt-server .node-body { background: rgba(80,40,120,0.2); border-color: #aa88ff; color: #aa88ff; }
-  .nt-pc .node-body { background: rgba(30,80,120,0.2); border-color: #88ccff; color: #88ccff; }
-  .nt-ap .node-body { background: rgba(120,30,70,0.2); border-color: #ff88aa; color: #ff88aa; }
-  .nt-cloud .node-body { background: rgba(20,80,120,0.2); border-color: #88ddff; color: #88ddff; }
+  .nt-router .node-body { border-color: var(--accent); color: var(--accent); }
+  .nt-switch .node-body { border-color: var(--accent2); color: var(--accent2); }
+  .nt-hub .node-body { border-color: var(--warn); color: var(--warn); }
+  .nt-firewall .node-body { border-color: var(--accent3); color: var(--accent3); }
+  .nt-server .node-body { border-color: #aa88ff; color: #aa88ff; }
+  .nt-pc .node-body { border-color: #88ccff; color: #88ccff; }
+  .nt-ap .node-body { border-color: #ff88aa; color: #ff88aa; }
+  .nt-cloud .node-body { border-color: #88ddff; color: #88ddff; }
 
   /* Packet animation */
   .packet {
@@ -500,7 +505,7 @@
   }
 
   .info-title {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Inter', monospace;
     font-size: 10px;
     letter-spacing: 2px;
     color: var(--text-dim);
@@ -700,6 +705,63 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
+  /* Dropdown Menu */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .dropdown-toggle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    transition: color 0.2s;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .dropdown-toggle:hover {
+    color: var(--accent);
+  }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--panel2);
+    min-width: 180px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    z-index: 1000;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+  .dropdown-item {
+    color: var(--text);
+    padding: 12px 16px;
+    display: block;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .dropdown-item:hover {
+    background: var(--panel);
+    color: var(--accent);
+  }
+
   select.prop-input {
     cursor: pointer;
   }
@@ -712,14 +774,17 @@
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="1"/><line x1="14" y1="6" x2="21" y2="6"/><line x1="14" y1="12" x2="21" y2="12"/><line x1="14" y1="18" x2="21" y2="18"/></svg>
   </button>
   <div class="header-divider"></div>
-  <div class="logo">
-    <span class="logo-icon">⬡</span>
-    DeepLab
+  <div class="dropdown">
+    <button class="dropdown-toggle"><i class="fa-solid fa-bars"></i></button>
+    <div class="dropdown-menu">
+      <div class="dropdown-item" id="btn-import">Open</div>
+      <div class="dropdown-item" id="btn-export">Download</div>
+      <div class="dropdown-item" id="btn-clear">Reset the canvas</div>
+    </div>
   </div>
+  <input type="file" id="file-import" accept=".json" style="display:none;">
   <div class="header-actions">
     <button class="btn primary" id="btn-simulate">▶ SIMULATE</button>
-    <button class="btn success" id="btn-export">⬇ EXPORT</button>
-    <button class="btn danger" id="btn-clear">✕ CLEAR</button>
     <div style="width:1px;height:24px;background:var(--border);margin:0 10px;"></div>
     <button class="panel-toggle" id="btn-theme" title="Toggle Day/Night Mode">
       <svg id="theme-icon-moon" viewBox="0 0 24 24" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -1755,6 +1820,40 @@ document.getElementById('btn-export').addEventListener('click', () => {
   a.download = `netforge-${detectTopology().toLowerCase().replace(/\s/g,'-')}.json`;
   a.click();
   log('Network exported as JSON', 'ok');
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-import').click();
+});
+document.getElementById('file-import').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      clearCanvas();
+      
+      const idMap = {};
+      data.nodes.forEach(n => {
+        const node = addNode(n.type, n.x, n.y, n.label);
+        if (n.ip) node.ip = n.ip;
+        idMap[n.id] = node.id;
+      });
+      data.links.forEach(l => {
+        if (idMap[l.from] && idMap[l.to]) {
+          createLink(idMap[l.from], idMap[l.to], l.technology || l.tech);
+        }
+      });
+      
+      fitAll();
+      log('Topology loaded from file', 'ok');
+    } catch (err) {
+      log('Failed to parse file', 'err');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // Reset
 });
 
 // ═══════════════════════════════════════════════════
