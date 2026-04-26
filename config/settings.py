@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 '''
@@ -190,7 +190,7 @@ SITE_ID = 1
 
 LOGIN_URL = 'login'
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'uz'
 
 TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
@@ -198,8 +198,8 @@ USE_L10N = True
 
 from django.utils.translation import gettext_lazy as _
 LANGUAGES = (
-    ('en', _('English')),
     ('uz', _('Uzbek')),
+    ('en', _('English')),
     ('ru', _('Russian')),
 )
 
@@ -207,13 +207,13 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
 
-MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
-MODELTRANSLATION_PREPOPULATE_LANGUAGE = 'uz'
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'uz'
+MODELTRANSLATION_PREPOPULATE_LANGUAGE = 'en'
 
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
@@ -230,8 +230,8 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 # Social auth: skip intermediate pages, auto-create users
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
-LOGIN_REDIRECT_URL = '/en/courses/'
-ACCOUNT_SIGNUP_REDIRECT_URL = '/en/courses/'
+LOGIN_REDIRECT_URL = '/uz/courses/'
+ACCOUNT_SIGNUP_REDIRECT_URL = '/uz/courses/'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_ADAPTER = 'apps.users.adapter.CustomSocialAccountAdapter'
 

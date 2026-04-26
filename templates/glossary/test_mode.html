@@ -1,0 +1,341 @@
+{% extends '../shared/_blank.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %} {% trans "Test Mode" %} {% endblock %}
+{% block content %}
+<div class="app-container">
+    
+    <!-- Header: Score & Music -->
+    <button class="header-btn btn-exit" onclick="window.location.href='{% url 'test_mode_setup' %}'">
+        <i class="fa-solid fa-xmark"></i> {% trans "End" %}
+    </button>
+
+    <div class="score-board">
+        <span><i class="fa-solid fa-star"></i></span> <span id="scoreDisplay">0</span> / <span id="totalDisplay">{{ total_count }}</span>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" class="screen active">
+        
+        <div class="progress-track" id="progressTrack">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="question-container">
+            <h2 class="question-type" id="questionType">{% trans "Question Type" %}</h2>
+            <div class="question-box" id="questionBox">
+                {% trans "Loading..." %}
+            </div>
+        </div>
+
+        <div class="options-grid" id="optionsGrid">
+            <!-- Options will be injected here -->
+        </div>
+
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="resultScreen" class="screen">
+        <h1 id="resultTitle">{% trans "Test Complete!" %}</h1>
+        
+        <div class="final-score-box">
+            <h2 class="big-score"><i class="fa-solid fa-star"></i><span id="finalScore">0</span></h2>
+            <p>{% trans "Correct Answers" %}</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box correct">
+                <i class="fa-solid fa-check"></i>
+                <span id="countCorrect">0</span>
+                <label>{% trans "Correct" %}</label>
+            </div>
+            <div class="stat-box incorrect">
+                <i class="fa-solid fa-xmark"></i>
+                <span id="countIncorrect">0</span>
+                <label>{% trans "Wrong" %}</label>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="window.location.reload()" style="margin-top: 30px;">{% trans "Try again" %}</button>
+        <button class="btn btn-secondary" onclick="window.location.href='{% url 'test_mode_setup' %}'" style="margin-top: 10px;">{% trans "New test" %}</button>
+    </div>
+
+</div>
+
+<style>
+    /* Styling */
+    body {
+        margin: 0; padding: 0;
+        font-family: 'Nunito', sans-serif;
+        background-color: var(--bg-app);
+        display: flex; justify-content: center; align-items: center;
+        min-height: 100vh;
+    }
+
+    .app-container {
+        width: 100%; max-width: 600px;
+        padding: 80px 20px 20px 20px;
+        background: var(--bg-panel);
+        min-height: 100vh;
+        display: flex; flex-direction: column; align-items: center;
+        position: relative;
+    }
+
+    /* Header */
+    .header-btn, .score-board {
+        position: absolute; top: 20px;
+        background: var(--bg-app);
+        border: 2px solid var(--border-color);
+        padding: 8px 16px; border-radius: 20px;
+        font-weight: 800; display: flex; align-items: center; gap: 8px;
+        box-shadow: 0 4px 0 var(--border-color);
+        color: var(--text-medium);
+        cursor: pointer;
+        font-family: var(--secondary-font);
+    }
+    .header-btn { left: 20px; transition: all 0.2s; }
+    .header-btn:hover { color: var(--theme-red); border-color: var(--theme-red); }
+    
+    .score-board { right: 20px; color: var(--theme-purple); border-color: var(--theme-purple-light); }
+
+    /* Game Screen */
+    .screen { width: 100%; display: none; flex-direction: column; align-items: center; animation: fadeIn 0.5s; }
+    .screen.active { display: flex; }
+
+    /* Bars */
+    .progress-track {
+        width: 100%; height: 16px; background: var(--border-color);
+        border-radius: 8px; margin-bottom: 30px; overflow: hidden; position: relative;
+    }
+    .progress-bar {
+        height: 100%; width: 0%; background: var(--theme-purple); border-radius: 8px;
+        transition: width 0.3s ease;
+    }
+
+    /* Question */
+    .question-container {
+        width: 100%;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .question-type {
+        font-size: 1rem;
+        color: var(--text-medium);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+    .question-box {
+        background: var(--bg-app);
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        padding: 30px 20px;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    /* Options */
+    .options-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+    
+    .option-btn {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-panel);
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        font-family: var(--primary-font);
+        box-shadow: 0 4px 0 var(--border-color);
+        display: flex;
+        align-items: center;
+        line-height: 1.4;
+    }
+
+    .option-btn:hover {
+        border-color: var(--theme-purple);
+        background: var(--theme-purple-light);
+    }
+    .option-btn:active {
+        transform: translateY(4px);
+        box-shadow: none;
+    }
+
+    .option-btn.correct {
+        border-color: var(--theme-green);
+        background: var(--theme-green-light);
+        color: var(--theme-green-dark);
+        box-shadow: 0 4px 0 var(--theme-green);
+    }
+
+    .option-btn.incorrect {
+        border-color: var(--theme-red);
+        background: var(--theme-red-light);
+        color: var(--theme-red-dark);
+        box-shadow: 0 4px 0 var(--theme-red);
+    }
+
+    .option-btn.disabled {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    /* Results */
+    .final-score-box { text-align: center; margin-bottom: 40px; }
+    .big-score { font-size: 4rem; margin: 0; color: var(--theme-purple); }
+    
+    .stats-grid { display: flex; gap: 10px; width: 100%; margin-bottom: 20px; }
+    .stat-box {
+        flex: 1; padding: 15px; border-radius: 15px; text-align: center;
+        border: 2px solid var(--border-color);
+        display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    .stat-box i { font-size: 1.5rem; margin-bottom: 5px; }
+    .stat-box span { font-size: 1.5rem; font-weight: 900; }
+    .stat-box label { font-size: 0.8rem; font-weight: 700; color: var(--text-medium); }
+    
+    .stat-box.correct { color: var(--theme-green); border-color: var(--theme-green-light); background: var(--theme-green-light); }
+    .stat-box.incorrect { color: var(--theme-red); border-color: var(--theme-red-light); background: var(--theme-red-light); }
+
+    .btn {
+        width: 100%; padding: 18px; border-radius: var(--btn-radius); border: none;
+        font-size: 1.2rem; font-weight: 900; color: white; cursor: pointer;
+        box-shadow: 0 6px 0 rgba(0,0,0,0.1); margin-bottom: 10px;
+        transition: all 0.2s;
+        font-family: var(--secondary-font);
+    }
+    .btn:active { transform: translateY(4px); box-shadow: none; margin-bottom: 14px; }
+    .btn-primary { background: var(--theme-purple); box-shadow: 0 6px 0 var(--theme-purple-dark); }
+    .btn-secondary { background: var(--theme-gray); color: var(--text-dark); box-shadow: 0 6px 0 #ccc; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const terms = {{ terms_json|safe }};
+        const totalCount = {{ total_count }};
+        
+        let currentIndex = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let isWaiting = false;
+
+        const questionTypeEl = document.getElementById('questionType');
+        const questionBox = document.getElementById('questionBox');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const progressBar = document.getElementById('progressBar');
+
+        if (terms.length < 4) {
+            alert("{% trans 'Not enough terms to generate options. Need at least 4 terms.' %}");
+            window.location.href = "{% url 'test_mode_setup' %}";
+            return;
+        }
+
+        renderQuestion();
+
+        function renderQuestion() {
+            isWaiting = false;
+            optionsGrid.innerHTML = '';
+            
+            const pct = (currentIndex / totalCount) * 100;
+            progressBar.style.width = `${pct}%`;
+
+            if (currentIndex >= terms.length) {
+                endGame();
+                return;
+            }
+
+            const currentTerm = terms[currentIndex];
+            
+            // Randomize question type: 0 = Term -> Definition, 1 = Definition -> Term
+            const isTermToDef = Math.random() < 0.5;
+
+            if (isTermToDef) {
+                questionTypeEl.textContent = "{% trans 'Find the definition for:' %}";
+                questionBox.innerHTML = `<strong>${currentTerm.term}</strong>` + (currentTerm.term_en ? `<br><small style="color:var(--text-medium); font-weight: normal; font-size: 0.8em">${currentTerm.term_en}</small>` : '');
+            } else {
+                questionTypeEl.textContent = "{% trans 'Find the term for:' %}";
+                questionBox.textContent = currentTerm.definition;
+            }
+
+            // Get 3 random wrong options
+            const otherTerms = terms.filter(t => t.id !== currentTerm.id);
+            const shuffledOthers = otherTerms.sort(() => 0.5 - Math.random());
+            const options = [currentTerm, ...shuffledOthers.slice(0, 3)];
+            
+            // Shuffle all 4 options
+            options.sort(() => 0.5 - Math.random());
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                
+                if (isTermToDef) {
+                    btn.textContent = opt.definition;
+                } else {
+                    btn.innerHTML = `<strong>${opt.term}</strong>` + (opt.term_en ? ` <small style="color:var(--text-medium); font-weight: normal;">(${opt.term_en})</small>` : '');
+                }
+
+                if (opt.id === currentTerm.id) {
+                    btn.dataset.isCorrect = "true";
+                }
+
+                btn.onclick = () => handleAnswer(opt.id === currentTerm.id, btn);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(isCorrect, selectedBtn) {
+            if (isWaiting) return;
+            isWaiting = true;
+
+            const allBtns = optionsGrid.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.classList.add('disabled'));
+
+            if (isCorrect) {
+                selectedBtn.classList.add('correct');
+                correctCount++;
+                scoreDisplay.textContent = correctCount;
+            } else {
+                selectedBtn.classList.add('incorrect');
+                incorrectCount++;
+                
+                // Highlight the correct one
+                allBtns.forEach(b => {
+                    if (b.dataset.isCorrect === "true") {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                currentIndex++;
+                renderQuestion();
+            }, 1500);
+        }
+
+        function endGame() {
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.add('active');
+            
+            document.getElementById('finalScore').textContent = correctCount;
+            document.getElementById('countCorrect').textContent = correctCount;
+            document.getElementById('countIncorrect').textContent = incorrectCount;
+            progressBar.style.width = '100%';
+        }
+    });
+</script>
+{% endblock content %}

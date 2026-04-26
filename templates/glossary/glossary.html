@@ -40,6 +40,19 @@
       </div>
       <div class="banner-icon">⚔️</div>
     </div>
+
+    <div class="mode-banner banner-test">
+      <div class="banner-content">
+        <h2>{% trans "Test Mode" %}</h2>
+        <p>{% trans "Test your knowledge with random terms!" %}</p>
+        <a
+          class="banner-btn btn-test-action btn-transform"
+          href="{% url 'test_mode_setup' %}"
+          >{% trans "Take Test" %}</a
+        >
+      </div>
+      <div class="banner-icon">📝</div>
+    </div>
   </div>
   <div class="page-header-row">
     <h1 class="page-title">DEEPWIKI</h1>

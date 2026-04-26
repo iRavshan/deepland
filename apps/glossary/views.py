@@ -247,3 +247,45 @@ def team_mode_view(request):
         'total_count': len(terms_data),
     }
     return render(request, 'glossary/team_mode.html', context)
+
+
+def test_mode_setup_view(request):
+    term_service = TermService()
+    context = {
+        'topics': term_service.get_all_topics()
+    }
+    return render(request, 'glossary/test_mode_setup.html', context)
+
+
+def test_mode_view(request):
+    term_service = TermService()
+
+    # Get parameters
+    topic_slugs = request.GET.getlist('topics')
+
+    # Filter terms
+    terms = term_service.get_all()
+
+    if topic_slugs and 'all' not in topic_slugs:
+        terms = terms.filter(topic__slug__in=topic_slugs)
+
+    # Shuffle
+    terms = terms.order_by('?')
+
+    # Serialize terms for JS
+    terms_data = []
+    for term in terms:
+        terms_data.append({
+            'id': term.id,
+            'term': term.term,
+            'term_en': getattr(term, 'term_en', ''),
+            'definition': term.short_definition,
+            'topic': term.topic.name if term.topic else 'General',
+        })
+
+    context = {
+        'terms_json': json.dumps(terms_data),
+        'total_count': len(terms_data),
+    }
+    return render(request, 'glossary/test_mode.html', context)
+

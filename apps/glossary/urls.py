@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     glossary_view, term_view, speed_run_view, learning_view,
     random_term_json, toggle_term_save, learning_setup_view,
-    speed_run_setup_view, team_mode_setup_view, team_mode_view
+    speed_run_setup_view, team_mode_setup_view, team_mode_view,
+    test_mode_setup_view, test_mode_view
 )
 
 urlpatterns = [
@@ -16,4 +17,6 @@ urlpatterns = [
     path("mode/team/setup", team_mode_setup_view, name="team_mode_setup"),
     path("api/random-term/", random_term_json, name="random_term_api"),
     path("api/toggle-save/", toggle_term_save, name="toggle_term_save"),
+    path("mode/test/setup", test_mode_setup_view, name="test_mode_setup"),
+    path("mode/test", test_mode_view, name="test_mode"),
 ]

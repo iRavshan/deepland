@@ -21,6 +21,9 @@
     --glow: 0 0 20px rgba(0,212,255,0.3);
     --glow2: 0 0 20px rgba(0,255,136,0.3);
     --grid-color: rgba(30,45,69,0.5);
+    --toolbar-bg: rgba(13,20,32,0.92);
+    --tool-btn-hover-shadow: 0 0 10px rgba(0,212,255,0.2);
+    --tool-btn-active-bg: rgba(0,255,136,0.1);
   }
   
   :root.day-mode {
@@ -38,6 +41,9 @@
     --glow: 0 0 15px rgba(2,132,199,0.3);
     --glow2: 0 0 15px rgba(22,163,74,0.3);
     --grid-color: rgba(203,213,225,0.8);
+    --toolbar-bg: rgba(255,255,255,0.92);
+    --tool-btn-hover-shadow: 0 0 10px rgba(2,132,199,0.2);
+    --tool-btn-active-bg: rgba(22,163,74,0.1);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -579,7 +585,7 @@
     transform: translateX(-50%);
     display: flex;
     gap: 8px;
-    background: rgba(13,20,32,0.92);
+    background: var(--toolbar-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px 12px;
@@ -601,8 +607,8 @@
     transition: all 0.15s;
     position: relative;
   }
-  .tool-btn:hover { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
-  .tool-btn.active { border-color: var(--accent2); background: rgba(0,255,136,0.1); }
+  .tool-btn:hover { border-color: var(--accent); box-shadow: var(--tool-btn-hover-shadow); }
+  .tool-btn.active { border-color: var(--accent2); background: var(--tool-btn-active-bg); }
   .tool-btn::after {
     content: attr(data-tip);
     position: absolute;
@@ -819,12 +825,12 @@
 
   <!-- CANVAS -->
   <div class="canvas-area" id="canvas">
+    <div class="canvas-hint" id="canvas-hint">
+      <div class="hint-icon">⬡</div>
+      <p>Drag components from the left panel<br>or choose a template to get started.<br><br>Scroll to zoom · Middle-click to pan<br>Click a node, then click another to connect.</p>
+    </div>
     <div class="canvas-inner" id="canvas-inner">
       <svg id="svg-layer"></svg>
-      <div class="canvas-hint" id="canvas-hint">
-        <div class="hint-icon">⬡</div>
-        <p>Drag components from the left panel<br>or choose a template to get started.<br><br>Scroll to zoom · Middle-click to pan<br>Click a node, then click another to connect.</p>
-      </div>
     </div>
 
     <div class="zoom-indicator" id="zoom-indicator">100%</div>

@@ -1989,7 +1989,7 @@ section {
 
 .banner-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 25px;
   margin-bottom: 40px;
 }
@@ -2023,6 +2023,12 @@ section {
   background-color: #f3f0ff;
   border-color: #8b5cf6;
   color: #5b21b6;
+}
+
+.banner-row .mode-banner.banner-test {
+  background-color: var(--theme-blue-light);
+  border-color: var(--theme-blue);
+  color: var(--theme-blue-dark);
 }
 
 .banner-row .mode-banner .banner-content h2 {
@@ -2074,6 +2080,12 @@ section {
   background: #8b5cf6;
   color: white;
   border-color: #6d28d9;
+}
+
+.banner-row .mode-banner .banner-content .banner-btn.btn-test-action {
+  background: var(--theme-blue);
+  color: white;
+  border-color: var(--theme-blue-dark);
 }
 
 @media (max-width: 900px) {

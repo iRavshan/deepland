@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogicLab — Circuit Designer</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --paper: #faf7f0;
+  --grid: rgba(100,130,180,0.12);
+  --border: #c8b898;
+  --border2: #a89878;
+  --ink: #2a1f0e;
+  --ink2: #4a3828;
+  --ink3: #6a5848;
+  --blue: #1a4a8a;
+  --amber: #c87020;
+  --amber2: #e89040;
+  --red: #a82020;
+  --green: #206820;
+  --panel: #ede8de;
+  --panel2: #e4ddd0;
+  --shadow: rgba(60,40,20,0.15);
+  --wire-0: #a82020;
+  --wire-1: #206820;
+  --wire-pending: #1a4a8a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(rgba(100,130,180,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,130,180,0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+header {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 20px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  border-bottom: 3px solid var(--amber);
+}
+.logo {
+  font-family: 'Special Elite', cursive;
+  font-size: 22px;
+  color: var(--amber2);
+  display: flex; align-items: center; gap: 10px;
+  letter-spacing: 1px;
+}
+.logo-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(250,247,240,0.4);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.header-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.15); }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.expr-display {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(250,247,240,0.6);
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.expr-display .ev { color: var(--amber2); font-style: normal; font-weight: 700; }
+.hbtn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+.hbtn:hover { border-color: var(--amber2); color: var(--amber2); background: rgba(200,112,32,0.1); }
+.hbtn.amber { border-color: var(--amber); color: var(--amber2); background: rgba(200,112,32,0.12); }
+.hbtn.amber:hover { background: rgba(200,112,32,0.25); }
+.main { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 190px;
+  background: var(--panel);
+  border-right: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  box-shadow: 2px 0 8px var(--shadow);
+}
+.sb-section { padding: 12px; border-bottom: 1px solid var(--border); }
+.sb-title {
+  font-family: 'Special Elite', cursive;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--ink3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.gate-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  margin-bottom: 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: grab;
+  background: var(--paper);
+  transition: all 0.15s;
+  box-shadow: 1px 1px 3px var(--shadow);
+  font-size: 11px;
+}
+.gate-item:hover { border-color: var(--amber); background: #fff8ee; box-shadow: 2px 2px 6px var(--shadow); transform: translateX(2px); }
+.gate-item:active { cursor: grabbing; }
+.gate-sym-big { font-family: 'Libre Baskerville', serif; font-size: 16px; font-style: italic; color: var(--blue); width: 20px; text-align: center; }
+.gate-name { font-weight: 600; color: var(--ink2); flex: 1; }
+.gate-desc { color: var(--ink3); font-size: 10px; }
+.var-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.var-badge {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--amber2);
+  font-family: 'Libre Baskerville', serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  cursor: grab;
+  border: 2px solid var(--amber);
+  transition: all 0.15s;
+}
+.var-badge:hover { background: var(--amber); color: var(--ink); }
+.var-badge:active { cursor: grabbing; }
+.var-label { font-size: 11px; color: var(--ink3); flex: 1; }
+.var-add-btn {
+  width: 100%; height: 26px;
+  border: 1px dashed var(--border2);
+  background: transparent;
+  cursor: pointer;
+  border-radius: 2px;
+  font-size: 13px;
+  color: var(--ink3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.var-add-btn:hover { border-color: var(--amber); color: var(--amber); }
+.probe-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: grab;
+  background: var(--paper);
+  transition: all 0.15s;
+  box-shadow: 1px 1px 3px var(--shadow);
+  font-size: 11px;
+  font-weight: 600;
+}
+.probe-item:hover { border-color: var(--blue); transform: translateX(2px); }
+.canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+#circuit-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.c-node { position: absolute; z-index: 10; }
+.gate-body {
+  background: var(--paper);
+  border: 2px solid var(--ink2);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 2px 2px 0 var(--border);
+  cursor: move;
+}
+.gate-body:hover { border-color: var(--amber); box-shadow: 3px 3px 0 var(--amber); }
+.c-node.selected .gate-body { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue), 3px 3px 0 var(--blue); }
+.var-node {
+  background: var(--ink);
+  border: 2px solid var(--amber);
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--amber2);
+  cursor: move;
+  transition: all 0.15s;
+  box-shadow: 2px 2px 0 rgba(60,40,20,0.3);
+}
+.c-node.selected .var-node { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue); }
+.out-node {
+  background: var(--paper);
+  border: 2px solid var(--blue);
+  border-radius: 4px;
+  padding: 5px 10px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 600; color: var(--blue);
+  cursor: move;
+  box-shadow: 2px 2px 0 rgba(26,74,138,0.2);
+}
+.c-node.selected .out-node { box-shadow: 0 0 0 2px var(--blue), 2px 2px 0 var(--blue); }
+.out-indicator {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--blue);
+  background: var(--paper);
+  transition: background 0.2s;
+}
+.out-indicator.val-1 { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px var(--green); }
+.out-indicator.val-0 { background: var(--red); border-color: var(--red); }
+.node-del {
+  position: absolute; top: -8px; right: -8px;
+  width: 16px; height: 16px;
+  background: var(--red); border: none; border-radius: 50%;
+  color: white; font-size: 9px; cursor: pointer;
+  display: none; align-items: center; justify-content: center; z-index: 30;
+}
+.c-node.selected .node-del { display: flex; }
+.canvas-hint {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+.canvas-hint .big { font-size: 56px; opacity: 0.1; margin-bottom: 12px; }
+.canvas-hint p {
+  font-family: 'Special Elite', cursive;
+  font-size: 13px; color: var(--ink3); opacity: 0.35; line-height: 2;
+}
+.canvas-toolbar {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+  background: rgba(42,31,14,0.92);
+  border: 1px solid var(--border2);
+  border-radius: 4px; padding: 7px 10px;
+  z-index: 100; backdrop-filter: blur(6px);
+}
+.tbtn {
+  width: 34px; height: 34px;
+  background: rgba(250,247,240,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: all 0.15s;
+  position: relative; color: var(--paper);
+}
+.tbtn:hover { border-color: var(--amber2); color: var(--amber2); }
+.tbtn.active { border-color: var(--amber); background: rgba(200,112,32,0.2); }
+.tbtn::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  background: var(--ink); border: 1px solid var(--border2);
+  color: var(--paper); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; padding: 2px 6px; border-radius: 2px;
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity 0.1s; letter-spacing: 1px; text-transform: uppercase;
+}
+.tbtn:hover::after { opacity: 1; }
+.right-panel {
+  width: 260px;
+  background: var(--panel);
+  border-left: 2px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: -2px 0 8px var(--shadow);
+}
+.rp-section { padding: 14px; border-bottom: 1px solid var(--border); }
+.rp-title {
+  font-family: 'Special Elite', cursive;
+  font-size: 12px; letter-spacing: 2px; color: var(--ink3);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.expr-box {
+  background: var(--paper);
+  border: 1px solid var(--border2); border-radius: 3px;
+  padding: 10px 12px; min-height: 44px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 14px; color: var(--ink); line-height: 1.7;
+  word-break: break-all;
+  box-shadow: inset 1px 1px 3px var(--shadow);
+}
+.expr-box .op { color: var(--blue); font-weight: 700; }
+.expr-box .evar { color: var(--amber); font-weight: 700; }
+.expr-box .enot { color: var(--red); }
+.expr-box em { color: var(--ink3); font-size: 12px; }
+.truth-wrap { flex: 1; overflow-y: auto; padding: 14px; }
+.truth-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.truth-table th {
+  background: var(--ink); color: var(--amber2);
+  padding: 5px 8px; text-align: center; font-weight: 600; letter-spacing: 1px;
+  border: 1px solid var(--ink2);
+  font-family: 'Libre Baskerville', serif; font-style: italic; font-size: 13px;
+}
+.truth-table th.out-col { color: #7ad4ff; }
+.truth-table td { padding: 4px 8px; text-align: center; border: 1px solid var(--border); transition: background 0.15s; }
+.truth-table tr:nth-child(even) td { background: var(--panel2); }
+.truth-table tr:hover td { background: #fff8ee; }
+.truth-table td.val-1 { color: var(--green); font-weight: 600; }
+.truth-table td.val-0 { color: var(--red); }
+.truth-table td.out-1 { color: var(--green); font-weight: 700; background: rgba(32,104,32,0.08); }
+.truth-table td.out-0 { color: var(--red); background: rgba(168,32,32,0.06); }
+.truth-table tr.cur-row td { background: rgba(200,112,32,0.15) !important; }
+.wire { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.wire-0 { stroke: var(--wire-0); }
+.wire-1 { stroke: var(--wire-1); }
+.wire-pending { stroke: var(--wire-pending); stroke-dasharray: 6,4; animation: dash 0.5s linear infinite; }
+.wire-neutral { stroke: var(--ink3); }
+.wire-hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
+@keyframes dash { to { stroke-dashoffset: -10; } }
+.sim-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 11px; }
+.sim-row label { color: var(--ink3); font-weight: 700; width: 14px; text-align: center; font-family: 'Libre Baskerville', serif; font-style: italic; font-size: 14px; }
+.sim-toggle { display: flex; }
+.sim-toggle button {
+  width: 30px; height: 22px;
+  border: 1px solid var(--border2); background: var(--paper);
+  cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 600; color: var(--ink3); transition: all 0.12s;
+}
+.sim-toggle button:first-child { border-radius: 2px 0 0 2px; }
+.sim-toggle button:last-child { border-radius: 0 2px 2px 0; }
+.sim-toggle button.a0 { background: var(--red); color: white; border-color: var(--red); }
+.sim-toggle button.a1 { background: var(--green); color: white; border-color: var(--green); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28">
+      <rect x="3" y="8" width="16" height="12" rx="2" fill="none" stroke="#e89040" stroke-width="2"/>
+      <line x1="19" y1="14" x2="25" y2="14" stroke="#e89040" stroke-width="2"/>
+      <line x1="3" y1="11" x2="0" y2="11" stroke="#e89040" stroke-width="2"/>
+      <line x1="3" y1="17" x2="0" y2="17" stroke="#e89040" stroke-width="2"/>
+      <text x="11" y="18" text-anchor="middle" font-family="serif" font-size="9" fill="#e89040">&amp;</text>
+    </svg>
+    LogicLab
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="logo-sub">Circuit Designer</div>
+    </div>
+  </div>
+  <div class="header-divider"></div>
+  <div class="expr-display" id="header-expr"><em style="color:rgba(250,247,240,0.3)">Build a circuit to see the expression...</em></div>
+  <div class="header-right">
+    <button class="hbtn amber" id="btn-eval">EVALUATE</button>
+    <button class="hbtn" id="btn-clear">CLEAR</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Logic Gates</div>
+      <div class="gate-item" draggable="true" data-gate="AND">
+        <span class="gate-sym-big">·</span>
+        <span class="gate-name">AND</span><span class="gate-desc">A · B</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="OR">
+        <span class="gate-sym-big">+</span>
+        <span class="gate-name">OR</span><span class="gate-desc">A + B</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="NOT">
+        <span class="gate-sym-big">¬</span>
+        <span class="gate-name">NOT</span><span class="gate-desc">¬A</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="NAND">
+        <span class="gate-sym-big">↑</span>
+        <span class="gate-name">NAND</span><span class="gate-desc">¬(A·B)</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="NOR">
+        <span class="gate-sym-big">↓</span>
+        <span class="gate-name">NOR</span><span class="gate-desc">¬(A+B)</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="XOR">
+        <span class="gate-sym-big">⊕</span>
+        <span class="gate-name">XOR</span><span class="gate-desc">A⊕B</span>
+      </div>
+      <div class="gate-item" draggable="true" data-gate="XNOR">
+        <span class="gate-sym-big">☰</span>
+        <span class="gate-name">XNOR</span><span class="gate-desc">¬(A⊕B)</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Variables</div>
+      <div id="var-list"></div>
+      <button class="var-add-btn" id="add-var-btn">+ Add Variable</button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Output</div>
+      <div class="probe-item" draggable="true" data-gate="OUTPUT">
+        <span style="font-size:18px">💡</span>
+        <span>Output Probe</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Simulate</div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:8px">Toggle variable values:</div>
+      <div id="sim-controls"></div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <svg id="circuit-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="canvas-hint" id="canvas-hint">
+      <div class="big">⊕</div>
+      <p>Drag gates &amp; variables onto the canvas<br>Click output port then input port to wire<br>Add an Output Probe to evaluate</p>
+    </div>
+    <div class="canvas-toolbar">
+      <div class="tbtn active" id="tool-select" data-tip="SELECT (S)">⬚</div>
+      <div class="tbtn" id="tool-wire" data-tip="WIRE (W)">⇄</div>
+      <div class="tbtn" id="tool-delete" data-tip="DELETE (D)">✕</div>
+      <div style="width:1px;background:rgba(255,255,255,0.15)"></div>
+      <div class="tbtn" id="tool-fit" data-tip="FIT VIEW">⊡</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="rp-section">
+      <div class="rp-title">Boolean Expression</div>
+      <div class="expr-box" id="expr-box"><em>Connect an Output Probe to see the expression</em></div>
+    </div>
+    <div class="truth-wrap">
+      <div class="rp-title">Truth Table</div>
+      <div id="truth-table-wrap">
+        <div style="color:var(--ink3);font-size:11px;text-align:center;padding:20px 0;font-family:'Special Elite',cursive">
+          Add variables and gates,<br>then click Evaluate
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const S = {
+  nodes: [], wires: [],
+  variables: ['A','B'],
+  varValues: { A:0, B:0 },
+  selected: null,
+  wiringFrom: null,
+  tool: 'select',
+  nid: 0, wid: 0
+};
+
+const GATE_CFG = {
+  AND:    { ins: 2, w: 70, h: 48, sym: '·',  label: 'AND'  },
+  OR:     { ins: 2, w: 70, h: 48, sym: '+',  label: 'OR'   },
+  NOT:    { ins: 1, w: 60, h: 38, sym: '¬',  label: 'NOT'  },
+  NAND:   { ins: 2, w: 70, h: 48, sym: '↑',  label: 'NAND' },
+  NOR:    { ins: 2, w: 70, h: 48, sym: '↓',  label: 'NOR'  },
+  XOR:    { ins: 2, w: 70, h: 48, sym: '⊕',  label: 'XOR'  },
+  XNOR:   { ins: 2, w: 70, h: 48, sym: '☰', label: 'XNOR' },
+  VAR:    { ins: 0, w: 44, h: 44, sym: '',   label: ''     },
+  OUTPUT: { ins: 1, w: 86, h: 38, sym: '',   label: 'OUT'  }
+};
+
+const wrap = document.getElementById('canvas-wrap');
+const svg  = document.getElementById('circuit-svg');
+const hint = document.getElementById('canvas-hint');
+
+// ============================================================
+// VAR PANEL
+// ============================================================
+function renderVarPanel() {
+  const list = document.getElementById('var-list');
+  list.innerHTML = '';
+  S.variables.forEach(v => {
+    const row = document.createElement('div');
+    row.className = 'var-row';
+    row.innerHTML = `<div class="var-badge" draggable="true" data-var="${v}">${v}</div>
+      <span class="var-label">Variable ${v}</span>`;
+    row.querySelector('.var-badge').addEventListener('dragstart', e => {
+      e.dataTransfer.setData('gate', 'VAR');
+      e.dataTransfer.setData('varname', v);
+    });
+    list.appendChild(row);
+  });
+  renderSimControls();
+}
+
+document.getElementById('add-var-btn').addEventListener('click', () => {
+  if (S.variables.length >= 8) return;
+  const next = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').find(l => !S.variables.includes(l));
+  if (next) { S.variables.push(next); S.varValues[next] = 0; renderVarPanel(); }
+});
+
+function renderSimControls() {
+  const el = document.getElementById('sim-controls');
+  el.innerHTML = '';
+  S.variables.forEach(v => {
+    const val = S.varValues[v] || 0;
+    const row = document.createElement('div');
+    row.className = 'sim-row';
+    row.innerHTML = `<label>${v}</label>
+      <div class="sim-toggle">
+        <button class="${val===0?'a0':''}" data-v="${v}" data-n="0">0</button>
+        <button class="${val===1?'a1':''}" data-v="${v}" data-n="1">1</button>
+      </div>`;
+    row.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        S.varValues[btn.dataset.v] = parseInt(btn.dataset.n);
+        renderSimControls();
+        evaluateAll();
+      });
+    });
+    el.appendChild(row);
+  });
+}
+
+renderVarPanel();
+
+// ============================================================
+// DRAG FROM SIDEBAR
+// ============================================================
+document.querySelectorAll('[data-gate]').forEach(el => {
+  el.addEventListener('dragstart', e => {
+    if (!el.dataset.var) e.dataTransfer.setData('gate', el.dataset.gate);
+  });
+});
+
+wrap.addEventListener('dragover', e => e.preventDefault());
+wrap.addEventListener('drop', e => {
+  e.preventDefault();
+  const gtype = e.dataTransfer.getData('gate');
+  const vname = e.dataTransfer.getData('varname');
+  if (!gtype) return;
+  const r = wrap.getBoundingClientRect();
+  const x = e.clientX - r.left - 30;
+  const y = e.clientY - r.top - 22;
+  addNode(gtype, x, y, vname || null);
+});
+
+// ============================================================
+// NODE MANAGEMENT
+// ============================================================
+function addNode(type, x, y, varName) {
+  const cfg = GATE_CFG[type];
+  const id = ++S.nid;
+  const node = { id, type, x, y, w: cfg.w, h: cfg.h, ins: cfg.ins,
+    varName: type === 'VAR' ? (varName || S.variables[0]) : null };
+  S.nodes.push(node);
+  mountNode(node);
+  updateHint();
+  return node;
+}
+
+function portPos(node, side, idx) {
+  if (side === 'out') return { x: node.x + node.w, y: node.y + node.h / 2 };
+  const n = node.ins, sp = node.h / (n + 1);
+  return { x: node.x, y: node.y + sp * (idx + 1) };
+}
+
+function mountNode(node) {
+  const el = document.createElement('div');
+  el.className = 'c-node';
+  el.id = `node-${node.id}`;
+  el.style.cssText = `position:absolute;left:${node.x}px;top:${node.y}px;z-index:10`;
+
+  let body = '';
+  if (node.type === 'VAR') {
+    body = `<div class="var-node" id="vb-${node.id}">${node.varName}</div>`;
+  } else if (node.type === 'OUTPUT') {
+    body = `<div class="out-node" id="vb-${node.id}">
+      <div class="out-indicator" id="oi-${node.id}"></div><span>OUT</span></div>`;
+  } else {
+    const cfg = GATE_CFG[node.type];
+    body = `<div class="gate-body" id="vb-${node.id}" style="width:${node.w}px;height:${node.h}px">
+      <span style="font-family:'Libre Baskerville',serif;font-size:18px;font-style:italic;color:var(--blue)">${cfg.sym}</span>
+      <span style="font-size:9px;position:absolute;bottom:2px;right:4px;color:var(--ink3);font-family:'IBM Plex Mono',monospace">${cfg.label}</span>
+    </div>`;
+  }
+
+  el.innerHTML = body + `<button class="node-del" onclick="delNode(${node.id})">✕</button>`;
+  wrap.appendChild(el);
+
+  // Drag to move
+  const vb = el.querySelector('[id^="vb-"]');
+  let dragging = false, dx0, dy0, ox, oy;
+  vb.addEventListener('mousedown', e => {
+    if (S.tool === 'wire') return;
+    dragging = true; dx0 = e.clientX; dy0 = e.clientY; ox = node.x; oy = node.y;
+    el.style.zIndex = 50; e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    node.x = ox + (e.clientX - dx0);
+    node.y = oy + (e.clientY - dy0);
+    el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
+    redrawWires(); redrawPorts();
+  });
+  document.addEventListener('mouseup', () => { if(dragging){dragging=false;el.style.zIndex=10;} });
+  vb.addEventListener('click', e => { if (!dragging) selectNode(node.id===S.selected?null:node.id); });
+
+  redrawPorts();
+}
+
+function redrawPorts() {
+  svg.querySelectorAll('.pc').forEach(e => e.remove());
+  S.nodes.forEach(node => {
+    if (node.type !== 'OUTPUT') drawPort(node, 'out', 0);
+    for (let i = 0; i < node.ins; i++) drawPort(node, 'in', i);
+  });
+}
+
+function drawPort(node, side, idx) {
+  const p = portPos(node, side, idx);
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', 5);
+  const hasWire = side === 'in'
+    ? S.wires.find(w => w.tn === node.id && w.ti === idx)
+    : S.wires.find(w => w.fn === node.id);
+  c.setAttribute('fill', hasWire ? '#2a1f0e' : '#faf7f0');
+  c.setAttribute('stroke', '#2a1f0e'); c.setAttribute('stroke-width', '1.5');
+  c.classList.add('pc');
+  c.style.cursor = 'crosshair';
+  c.addEventListener('mouseenter', () => c.setAttribute('r', 7));
+  c.addEventListener('mouseleave', () => c.setAttribute('r', 5));
+  c.addEventListener('click', e => { e.stopPropagation(); portClick(node.id, side, idx, p.x, p.y); });
+  svg.appendChild(c);
+}
+
+function portClick(nid, side, idx, px, py) {
+  if (S.tool === 'delete') return;
+  if (!S.wiringFrom) {
+    S.wiringFrom = { nid, side, idx, px, py };
+  } else {
+    const from = S.wiringFrom; S.wiringFrom = null; clearTemp();
+    let fn, ti, tnid;
+    if (from.side === 'out' && side === 'in') {
+      fn = from.nid; tnid = nid; ti = idx;
+    } else if (from.side === 'in' && side === 'out') {
+      fn = nid; tnid = from.nid; ti = from.idx;
+    } else return;
+    if (fn === tnid) return;
+    if (S.wires.find(w => w.tn === tnid && w.ti === ti)) {
+      return; // input occupied
+    }
+    S.wires.push({ id: ++S.wid, fn, tn: tnid, ti, val: null });
+    redrawWires(); redrawPorts(); evaluateAll();
+  }
+}
+
+function clearTemp() { svg.querySelectorAll('.tw').forEach(e => e.remove()); }
+
+wrap.addEventListener('mousemove', e => {
+  if (!S.wiringFrom) return;
+  clearTemp();
+  const r = wrap.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const path = curve(S.wiringFrom.px, S.wiringFrom.py, mx, my);
+  const ln = mkPath(path, 'wire wire-pending tw');
+  svg.appendChild(ln);
+});
+
+wrap.addEventListener('click', e => {
+  if (e.target === wrap || e.target === svg) {
+    if (S.wiringFrom) { S.wiringFrom = null; clearTemp(); }
+    selectNode(null);
+  }
+});
+
+function curve(x1, y1, x2, y2) {
+  const cx = (x1 + x2) / 2;
+  return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`;
+}
+
+function mkPath(d, cls) {
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('d', d); p.setAttribute('class', cls);
+  return p;
+}
+
+function redrawWires() {
+  svg.querySelectorAll('.wire:not(.tw),.wire-hit').forEach(e => e.remove());
+  S.wires.forEach(w => {
+    const fn = S.nodes.find(n => n.id === w.fn);
+    const tn = S.nodes.find(n => n.id === w.tn);
+    if (!fn || !tn) return;
+    const from = portPos(fn, 'out', 0);
+    const to   = portPos(tn, 'in', w.ti);
+    const d = curve(from.x, from.y, to.x, to.y);
+    const hit = mkPath(d, 'wire-hit');
+    hit.addEventListener('click', () => { if (S.tool === 'delete') delWire(w.id); });
+    svg.insertBefore(hit, svg.firstChild);
+    const vcls = w.val === 1 ? 'wire-1' : w.val === 0 ? 'wire-0' : 'wire-neutral';
+    svg.insertBefore(mkPath(d, `wire ${vcls}`), svg.firstChild);
+  });
+}
+
+function delWire(wid) {
+  S.wires = S.wires.filter(w => w.id !== wid);
+  redrawWires(); redrawPorts(); evaluateAll();
+}
+
+// ============================================================
+// SELECT / DELETE
+// ============================================================
+function selectNode(id) {
+  document.querySelectorAll('.c-node').forEach(el => el.classList.remove('selected'));
+  S.selected = id;
+  if (id) document.getElementById(`node-${id}`)?.classList.add('selected');
+}
+
+window.delNode = function(id) {
+  S.wires = S.wires.filter(w => w.fn !== id && w.tn !== id);
+  S.nodes = S.nodes.filter(n => n.id !== id);
+  document.getElementById(`node-${id}`)?.remove();
+  redrawWires(); redrawPorts(); evaluateAll(); updateHint();
+};
+
+// ============================================================
+// TOOLS
+// ============================================================
+['tool-select','tool-wire','tool-delete'].forEach(tid => {
+  document.getElementById(tid)?.addEventListener('click', () => {
+    ['tool-select','tool-wire','tool-delete'].forEach(t => document.getElementById(t)?.classList.remove('active'));
+    document.getElementById(tid).classList.add('active');
+    S.tool = tid.replace('tool-','');
+    if (S.tool !== 'wire') { S.wiringFrom = null; clearTemp(); }
+  });
+});
+
+document.getElementById('tool-fit')?.addEventListener('click', () => {
+  if (!S.nodes.length) return;
+  const xs = S.nodes.map(n => n.x), ys = S.nodes.map(n => n.y);
+});
+
+// ============================================================
+// EVALUATION
+// ============================================================
+function evalNode(id, vis = new Set()) {
+  if (vis.has(id)) return null;
+  vis.add(id);
+  const n = S.nodes.find(x => x.id === id);
+  if (!n) return null;
+  if (n.type === 'VAR') return S.varValues[n.varName] ?? 0;
+  const getIn = i => {
+    const w = S.wires.find(w => w.tn === id && w.ti === i);
+    return w ? evalNode(w.fn, new Set(vis)) : null;
+  };
+  const ins = [];
+  for (let i = 0; i < n.ins; i++) {
+    const v = getIn(i); if (v === null) return null; ins.push(v);
+  }
+  switch (n.type) {
+    case 'AND':    return ins[0] & ins[1];
+    case 'OR':     return ins[0] | ins[1];
+    case 'NOT':    return ins[0] ^ 1;
+    case 'NAND':   return (ins[0] & ins[1]) ^ 1;
+    case 'NOR':    return (ins[0] | ins[1]) ^ 1;
+    case 'XOR':    return ins[0] ^ ins[1];
+    case 'XNOR':   return (ins[0] ^ ins[1]) ^ 1;
+    case 'OUTPUT': return ins[0];
+  }
+  return null;
+}
+
+function buildExpr(id, vis = new Set()) {
+  if (vis.has(id)) return '(loop)';
+  vis.add(id);
+  const n = S.nodes.find(x => x.id === id);
+  if (!n) return '?';
+  if (n.type === 'VAR') return n.varName;
+  if (n.type === 'OUTPUT') {
+    const w = S.wires.find(w => w.tn === id && w.ti === 0);
+    return w ? buildExpr(w.fn, new Set(vis)) : '?';
+  }
+  const gI = i => {
+    const w = S.wires.find(w => w.tn === id && w.ti === i);
+    return w ? buildExpr(w.fn, new Set(vis)) : '?';
+  };
+  switch (n.type) {
+    case 'AND':  return `(${gI(0)} \xb7 ${gI(1)})`;
+    case 'OR':   return `(${gI(0)} + ${gI(1)})`;
+    case 'NOT':  return `\xac${gI(0)}`;
+    case 'NAND': return `\xac(${gI(0)} \xb7 ${gI(1)})`;
+    case 'NOR':  return `\xac(${gI(0)} + ${gI(1)})`;
+    case 'XOR':  return `(${gI(0)} \u2295 ${gI(1)})`;
+    case 'XNOR': return `\xac(${gI(0)} \u2295 ${gI(1)})`;
+  }
+  return '?';
+}
+
+function evaluateAll() {
+  // propagate wire values
+  S.wires.forEach(w => { w.val = null; });
+  S.nodes.forEach(n => {
+    if (n.type === 'VAR') {
+      S.wires.filter(w => w.fn === n.id).forEach(w => w.val = S.varValues[n.varName] ?? 0);
+    }
+  });
+  // multi-pass
+  for (let pass = 0; pass < 5; pass++) {
+    S.nodes.forEach(n => {
+      if (n.type === 'VAR' || n.type === 'OUTPUT') return;
+      const ins = [];
+      for (let i = 0; i < n.ins; i++) {
+        const w = S.wires.find(w => w.tn === n.id && w.ti === i);
+        if (!w || w.val === null) { ins.push(null); } else { ins.push(w.val); }
+      }
+      if (ins.includes(null)) return;
+      let out = null;
+      switch (n.type) {
+        case 'AND':  out = ins[0] & ins[1]; break;
+        case 'OR':   out = ins[0] | ins[1]; break;
+        case 'NOT':  out = ins[0] ^ 1; break;
+        case 'NAND': out = (ins[0] & ins[1]) ^ 1; break;
+        case 'NOR':  out = (ins[0] | ins[1]) ^ 1; break;
+        case 'XOR':  out = ins[0] ^ ins[1]; break;
+        case 'XNOR': out = (ins[0] ^ ins[1]) ^ 1; break;
+      }
+      if (out !== null) S.wires.filter(w => w.fn === n.id).forEach(w => w.val = out);
+    });
+  }
+
+  redrawWires();
+  redrawPorts();
+
+  const outNode = S.nodes.find(n => n.type === 'OUTPUT');
+  if (!outNode) { showExpr(null); showTruth(null); return; }
+
+  const val = evalNode(outNode.id);
+  const ind = document.getElementById(`oi-${outNode.id}`);
+  if (ind) ind.className = `out-indicator ${val===1?'val-1':val===0?'val-0':''}`;
+
+  const expr = buildExpr(outNode.id);
+  showExpr(expr);
+  showTruth(outNode.id, expr);
+}
+
+function showExpr(expr) {
+  const box = document.getElementById('expr-box');
+  const hdr = document.getElementById('header-expr');
+  if (!expr || expr.includes('?') || expr.includes('loop')) {
+    box.innerHTML = '<em>Connect all inputs to see the expression</em>';
+    hdr.innerHTML = '<em style="color:rgba(250,247,240,0.3)">Incomplete circuit...</em>';
+    return;
+  }
+  const fmt = expr
+    .replace(/\xac/g, '<span class="enot">\xac</span>')
+    .replace(/\xb7/g, '<span class="op"> \xb7 </span>')
+    .replace(/\+/g, '<span class="op"> + </span>')
+    .replace(/\u2295/g, '<span class="op"> \u2295 </span>')
+    .replace(/\b([A-Z])\b/g, '<span class="evar">$1</span>');
+  box.innerHTML = `F = ${fmt}`;
+  hdr.innerHTML = `F = <span class="ev">${expr}</span>`;
+}
+
+function showTruth(outNodeId, expr) {
+  const vars = [...new Set(S.nodes.filter(n=>n.type==='VAR').map(n=>n.varName))].sort();
+  const tw = document.getElementById('truth-table-wrap');
+  if (!vars.length || !outNodeId) {
+    tw.innerHTML = '<div style="color:var(--ink3);font-size:11px;text-align:center;padding:20px 0;font-family:\'Special Elite\',cursive">Add variables and gates,<br>then click Evaluate</div>';
+    return;
+  }
+  if (vars.length > 6) { tw.innerHTML = '<div style="color:var(--ink3);font-size:11px;padding:12px;text-align:center">Max 6 variables for truth table</div>'; return; }
+
+  const saved = { ...S.varValues };
+  const rows = Math.pow(2, vars.length);
+  const data = [];
+  for (let i = 0; i < rows; i++) {
+    const asgn = {};
+    vars.forEach((v,vi) => { asgn[v] = (i >> (vars.length-1-vi)) & 1; });
+    Object.assign(S.varValues, asgn);
+    data.push({ asgn, out: evalNode(outNodeId) });
+  }
+  Object.assign(S.varValues, saved);
+
+  const curIdx = data.findIndex(row => vars.every(v => row.asgn[v] === saved[v]));
+
+  let html = `<table class="truth-table"><thead><tr>`;
+  vars.forEach(v => html += `<th>${v}</th>`);
+  html += `<th class="out-col">F</th></tr></thead><tbody>`;
+  data.forEach((row, i) => {
+    const cur = i === curIdx;
+    html += `<tr class="${cur?'cur-row':''}">`;
+    vars.forEach(v => html += `<td class="val-${row.asgn[v]}">${row.asgn[v]}</td>`);
+    const oc = row.out===1?'out-1':'out-0';
+    html += `<td class="${row.out!==null?oc:''}">${row.out!==null?row.out:'?'}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  tw.innerHTML = html;
+}
+
+// ============================================================
+// BUTTONS / KEYS
+// ============================================================
+document.getElementById('btn-eval').addEventListener('click', evaluateAll);
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (!confirm('Clear the entire circuit?')) return;
+  S.nodes.forEach(n => document.getElementById(`node-${n.id}`)?.remove());
+  S.nodes = []; S.wires = [];
+  svg.innerHTML = '';
+  selectNode(null); updateHint();
+  showExpr(null); showTruth(null);
+});
+
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if ((e.key==='Delete'||e.key==='Backspace') && S.selected) window.delNode(S.selected);
+  if (e.key==='Escape') { S.wiringFrom=null; clearTemp(); selectNode(null); }
+  if (e.key==='s') document.getElementById('tool-select').click();
+  if (e.key==='w') document.getElementById('tool-wire').click();
+  if (e.key==='d') document.getElementById('tool-delete').click();
+});
+
+function updateHint() { hint.style.display = S.nodes.length ? 'none' : ''; }
+
+// ============================================================
+// STARTER CIRCUIT: (A · B) + ¬B
+// ============================================================
+function loadDemo() {
+  const a  = addNode('VAR', 70, 130); a.varName = 'A';
+  document.getElementById(`vb-${a.id}`).textContent = 'A';
+  const b  = addNode('VAR', 70, 240); b.varName = 'B';
+  document.getElementById(`vb-${b.id}`).textContent = 'B';
+  const ag = addNode('AND',  220, 160);
+  const ng = addNode('NOT',  220, 290);
+  const og = addNode('OR',   380, 210);
+  const ot = addNode('OUTPUT', 530, 215);
+
+  const W = (fn, tn, ti) => S.wires.push({ id: ++S.wid, fn, tn, ti, val: null });
+  W(a.id, ag.id, 0); W(b.id, ag.id, 1);
+  W(b.id, ng.id, 0);
+  W(ag.id, og.id, 0); W(ng.id, og.id, 1);
+  W(og.id, ot.id, 0);
+
+  redrawWires(); redrawPorts(); evaluateAll(); updateHint();
+}
+
+loadDemo();
+</script>
+</body>
+</html>

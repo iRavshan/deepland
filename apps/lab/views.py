@@ -1,6 +1,10 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 
-@login_required
+def index(request):
+    return render(request, 'lab/index.html')
+
 def computer_network(request):
     return render(request, 'lab/computer_network.html')
+
+def logic_circuit(request):
+    return render(request, 'lab/logic_circuit.html')
