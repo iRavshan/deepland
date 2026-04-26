@@ -14,6 +14,9 @@
                 <a href="{% url 'course_list' %}" class="btn-primary">{% trans "Start Learning" %}</a>
                 <a href="{% url 'login' %}" class="btn-secondary">{% trans "Join Community" %}</a>
             </div>
+            <div style="margin-top: 20px; font-size: 0.9rem; color: var(--text-medium); font-weight: 600;">
+                <i class="fa-solid fa-shield-halved"></i> {% trans "Your data is safe with us. Read our" %} <a href="{% url 'privacy' %}" style="color: var(--theme-blue); text-decoration: underline;">{% trans "Privacy Policy" %}</a>.
+            </div>
         </div>
         <div class="hero-visual">
             <img src="{% static 'img/banners/characters.png' %}" alt="Deepland Characters" class="hero-img">
@@ -87,6 +90,9 @@
             <h2>{% trans "Ready to start your adventure?" %}</h2>
             <p>{% trans "Join thousands of learners and start mastering new skills today." %}</p>
             <a href="{% url 'course_list' %}" class="btn-primary lg">{% trans "Launch Deepland" %}</a>
+            <p style="margin-top: 20px; font-size: 0.95rem; opacity: 0.9;">
+                {% trans "By starting, you agree to our" %} <a href="{% url 'privacy' %}" style="color: white; text-decoration: underline; font-weight: 700;">{% trans "Privacy Policy" %}</a>.
+            </p>
         </div>
     </div>
 </section>
